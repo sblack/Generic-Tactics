@@ -238,8 +238,6 @@ void AGTPlayerController::OnLeftClickUpCombat()
 				bMoving = true;
 				ActiveCharacter->CurrentAP -= NavPathCost;
 				ANavGrid::Instance->ShowMoveRange(nullptr);
-				ANavGrid::RemoveActorFromGrid(ActiveController->GetTacticsCharacter());
-				ACameraPawn::Instance->AttachCamera(ActiveController->GetPawn());
 				ActiveCharacter->StartMoving(NavPath);
 				UGTHUDCode::Instance->HideCommands();
 			}

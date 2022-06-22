@@ -52,18 +52,3 @@ bool AGTAIPlayer::GetPathBack(FVector destination, TArray<FVector>& pathBack) co
 
 	return result;
 }
-
-void AGTAIPlayer::FinishedMoving()
-{
-	Super::FinishedMoving();
-
-	if (IsPendingKill())
-	{
-		return;
-	}
-
-	AGTPlayerController::Instance->MoveCompleted();
-
-	if (bIsMyTurn)
-		ANavGrid::Instance->ShowMoveRange(this);
-}

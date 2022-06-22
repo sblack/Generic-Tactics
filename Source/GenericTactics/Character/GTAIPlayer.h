@@ -24,6 +24,4 @@ public:
 	//virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 
 	virtual bool GetPathBack(FVector destination, TArray<FVector>& pathBack) const override;
-
-	virtual void FinishedMoving() override;
 };

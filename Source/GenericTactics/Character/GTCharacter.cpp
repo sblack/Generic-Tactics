@@ -4,6 +4,9 @@
 #include "GTCharacter.h"
 #include "GTAIController.h"
 #include "../Utility/GTBFL.h"
+#include "../Movement/NavGrid.h"
+#include "../Player/CameraPawn.h"
+#include "../Player/GTPlayerController.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "PaperFlipbookComponent.h"
@@ -222,6 +225,38 @@ void AGTCharacter::StartMoving(TArray<FVector> path)
 		MoveSteps.Add(FMovementStep(path[i], path[i + 1]));
 	}
 	SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
+	ANavGrid::RemoveActorFromGrid(this);
+	ACameraPawn::Instance->AttachCamera(this);
+}
+
+void AGTCharacter::FinishedMoving()
+{
+	if (IsPendingKill())
+	{
+		return;
+	}
+
+	if (GetGameInstance()->IsPendingKillOrUnreachable())
+	{
+		return;
+	}
+
+	SetActorLocation(ANavGrid::Instance->AlignToGrid(GetActorLocation()));
+	ANavGrid::AddActorToGrid(this);
+	ANavGrid::MoveDataID++;
+	ACameraPawn::Instance->AttachCamera(nullptr);
+	if(Team == 0) // Party
+		AGTPlayerController::Instance->MoveCompleted();
+
+	if (CurrentAP < 1) //TODO: replace 1 with minAP?
+		GetTacticsAI()->EndTurn();
+	else
+	{
+		if(Team == 0) // Party
+			ANavGrid::Instance->ShowMoveRange(GetTacticsAI()); //GenMoveData is part of this
+		else
+			ANavGrid::Instance->GenerateMoveData(GetTacticsAI());
+	}
 }
 
 void AGTCharacter::Tick(float DeltaTime)
@@ -233,7 +268,7 @@ void AGTCharacter::Tick(float DeltaTime)
 		if (MoveSteps.Num() == 0)
 		{
 			bIsMoving = false;
-			GetTacticsAI()->FinishedMoving();
+			FinishedMoving();
 			return;
 			//DONE
 		}
@@ -246,7 +281,7 @@ void AGTCharacter::Tick(float DeltaTime)
 				{
 					bIsMoving = false;
 					SetActorLocation(MoveSteps[0].CalcPosition(MoveSteps[0].TimeToArrival));
-					GetTacticsAI()->FinishedMoving();
+					FinishedMoving();
 					return;
 					//DONE
 				}

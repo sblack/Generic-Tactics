@@ -9,11 +9,16 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(NotEditInlineNew)
 class GENERICTACTICS_API UActionMove : public UAction
 {
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadOnly, meta = (ExposeOnSpawn = true))
 		FVector Destination;
+
+	void Perform(class AGTCharacter* user, FVector direction) override;
+
+	//void Resolve(class AGTCharacter* user, FVector direction) override;
+
 };

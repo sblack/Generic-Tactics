@@ -216,28 +216,6 @@ bool AGTAIController::GetPathBack(FVector destination, TArray<FVector>& pathBack
 	return true;
 }
 
-void AGTAIController::FinishedMoving()
-{
-	if (IsPendingKill())
-	{
-		return;
-	}
-
-	if (GetGameInstance()->IsPendingKillOrUnreachable())
-	{
-		return;
-	}
-
-	GetPawn()->SetActorLocation(ANavGrid::Instance->AlignToGrid(GetPawn()->GetActorLocation()));
-	ANavGrid::AddActorToGrid(GetTacticsCharacter());
-	ANavGrid::MoveDataID++;
-	ANavGrid::Instance->GenerateMoveData(this);
-	ACameraPawn::Instance->AttachCamera(nullptr);
-
-	if (GetTacticsCharacter()->CurrentAP < 1)
-		EndTurn();
-}
-
 //FAIRequestID AGTAIController::RequestMove(const FAIMoveRequest& MoveRequest, FNavPathSharedPtr Path)
 //{
 //	UE_LOG(LogTemp, Log, TEXT("%s RequestMove"), *GetName());

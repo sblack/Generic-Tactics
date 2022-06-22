@@ -49,6 +49,8 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void FrontBackFlip();
 
+	void FinishedMoving();
+
 protected:
 
 	UPROPERTY(BlueprintReadOnly)

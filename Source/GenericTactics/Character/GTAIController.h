@@ -50,8 +50,6 @@ public:
 
 	virtual bool GetPathBack(FVector destination, TArray<FVector>& pathBack) const;
 
-	virtual void FinishedMoving();
-
 	//virtual FAIRequestID RequestMove(const FAIMoveRequest& MoveRequest, FNavPathSharedPtr Path) override;
 
 	UFUNCTION(BlueprintPure, Category = "Tactics")
