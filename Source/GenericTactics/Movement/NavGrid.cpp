@@ -157,7 +157,7 @@ void ANavGrid::ScanTile(int ix, int iy)
 	//DrawDebugLine(GetWorld(), vec, vec + FVector(0, 0, 200), FColor::Cyan, false, 5.f, 0, 5.f);
 }
 
-void ANavGrid::AddNeighbors(FNodeData data, float maxCost, class AGTAIController* controller)
+void ANavGrid::AddNeighbors(FNodeData data, float maxCost, class AGTCharacter* character)
 {
 	for (int i = 0; i < 8; i++)
 	{
@@ -170,7 +170,7 @@ void ANavGrid::AddNeighbors(FNodeData data, float maxCost, class AGTAIController
 		if (gridData.Location.Z - data.Location.Z > 50 || gridData.Location.Z - data.Location.Z < -75)
 			continue;
 
-		if (gridData.Blocked(controller))
+		if (gridData.Blocked(character))
 			continue;
 
 		// A B
@@ -186,7 +186,7 @@ void ANavGrid::AddNeighbors(FNodeData data, float maxCost, class AGTAIController
 				continue;
 		}
 
-		float cost = GetCost(vec, Offsets[d], controller);
+		float cost = GetCost(vec, Offsets[d], character);
 		float value = data.Value + cost;
 
 		if (value > maxCost)
@@ -320,7 +320,7 @@ void ANavGrid::RemoveActorFromGrid(TScriptInterface<ITargetableInterface> actor)
 
 }
 
-float ANavGrid::GetCost(FVector target, FVector direction, const class AGTAIController* controller)
+float ANavGrid::GetCost(FVector target, FVector direction, const class AGTCharacter* character)
 {
 	float mult;
 	FGridData datum = GetGridData(target);
@@ -357,24 +357,24 @@ float ANavGrid::GetDistance(FVector vector)
 	return result;
 }
 
-void ANavGrid::GenerateMoveData(class AGTAIController* controller)
+void ANavGrid::GenerateMoveData(class AGTCharacter* character)
 {
-	if (controller->MoveDataID == MoveDataID)
+	if (character->MoveDataID == MoveDataID)
 		return;
 
 	//clock_t startTime = clock();
 
-	controller->MoveDataID = MoveDataID;
-	for (int i = 0; i < controller->MoveGrid.Num(); i++)
+	character->MoveDataID = MoveDataID;
+	for (int i = 0; i < character->MoveGrid.Num(); i++)
 	{
-		controller->MoveGrid[i].Empty();
+		character->MoveGrid[i].Empty();
 	}
-	controller->MoveGrid.Empty();
+	character->MoveGrid.Empty();
 	Fringe.Empty();
 
-	float maxCost = controller->GetTacticsCharacter()->CurrentAP;
+	float maxCost = character->CurrentAP;
 
-	FVector start = controller->GetPawn()->GetActorLocation() - FVector(0, 0, controller->GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+	FVector start = character->GetActorLocation() - FVector(0, 0, character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 	UE_LOG(LogNavGrid, Log, TEXT("GMD: starting from %s"), *start.ToString());
 	Fringe.Add(FNodeData(AlignToGrid(start)));
 
@@ -398,26 +398,26 @@ void ANavGrid::GenerateMoveData(class AGTAIController* controller)
 
 		bool bFoundX = false;
 		//rows in MoveGrid are not necessarily consecutive Xs, so find row with same X value
-		for (int i = 0; i < controller->MoveGrid.Num(); i++)
+		for (int i = 0; i < character->MoveGrid.Num(); i++)
 		{
-			if (controller->MoveGrid[i].Num() == 0)
+			if (character->MoveGrid[i].Num() == 0)
 			{
-				controller->MoveGrid.RemoveAtSwap(i);
+				character->MoveGrid.RemoveAtSwap(i);
 				i--;
 				continue;
 			}
 
-			if (XYToIndex(controller->MoveGrid[i][0].Location.X) == dX)
+			if (XYToIndex(character->MoveGrid[i][0].Location.X) == dX)
 			{
 				bFoundX = true;
 				bool bFoundY = false;
-				for (int j = 0; j < controller->MoveGrid[i].Num(); j++)
+				for (int j = 0; j < character->MoveGrid[i].Num(); j++)
 				{
-					if (XYToIndex(controller->MoveGrid[i][j].Location.Y) == dY)
+					if (XYToIndex(character->MoveGrid[i][j].Location.Y) == dY)
 					{
-						if (controller->MoveGrid[i][j].Value > data.Value)
+						if (character->MoveGrid[i][j].Value > data.Value)
 						{
-							controller->MoveGrid[i][j] = data;
+							character->MoveGrid[i][j] = data;
 							bAdded = true;
 						}
 						bFoundY = true;
@@ -426,7 +426,7 @@ void ANavGrid::GenerateMoveData(class AGTAIController* controller)
 				}
 				if (!bFoundY)
 				{
-					controller->MoveGrid[i].Add(data);
+					character->MoveGrid[i].Add(data);
 					bAdded = true;
 				}
 				break;
@@ -436,12 +436,12 @@ void ANavGrid::GenerateMoveData(class AGTAIController* controller)
 		{
 			TArray<FNodeData> temp;
 			temp.Add(data);
-			controller->MoveGrid.Add(temp);
+			character->MoveGrid.Add(temp);
 			bAdded = true;
 		}
 
 		if (bAdded)
-			AddNeighbors(data, maxCost, controller);
+			AddNeighbors(data, maxCost, character);
 	}
 
 	/*for (int i = 0; i < controller->MoveGrid.Num(); i++)
@@ -469,28 +469,28 @@ void ANavGrid::GenerateMoveData(class AGTAIController* controller)
 	UE_LOG(LogNavGrid, Log, TEXT("Generated MoveData for %s: %d %d nodes"), *controller->GetName(), controller->MoveGrid.Num(), count);*/
 }
 
-void ANavGrid::ShowMoveRange(class AGTAIController* controller)
+void ANavGrid::ShowMoveRange(class AGTCharacter* character)
 {
-	if (controller)
+	if (character)
 	{
 		ShowMoveRange(nullptr);
 
 		float maxCost = 5;// controller->GetTacticsCharacter()->CurrentAP;
 
-		GenerateMoveData(controller);
-		for (int i = 0; i < controller->MoveGrid.Num(); i++)
+		GenerateMoveData(character);
+		for (int i = 0; i < character->MoveGrid.Num(); i++)
 		{
-			for (int j = 0; j < controller->MoveGrid[i].Num(); j++)
+			for (int j = 0; j < character->MoveGrid[i].Num(); j++)
 			{
 
 				//UE_LOG(LogNavGrid, Log, TEXT(" %d %d %f"), XYToIndex(controller->MoveGrid[i][j].Location.X), XYToIndex(controller->MoveGrid[i][j].Location.Y), controller->MoveGrid[i][j].Value);
-				if (controller->MoveGrid[i][j].Value > maxCost || controller->MoveGrid[i][j].Occupied)
+				if (character->MoveGrid[i][j].Value > maxCost || character->MoveGrid[i][j].Occupied)
 				{
 					//UE_LOG(LogNavGrid, Error, TEXT("Here it is"));
 					continue;
 				}
 
-				FGridData* gridData = GetGridDataPtr(controller->MoveGrid[i][j].Location);
+				FGridData* gridData = GetGridDataPtr(character->MoveGrid[i][j].Location);
 
 				if (gridData == nullptr)
 				{
@@ -666,7 +666,7 @@ void ANavGrid::ShowTargeting(FVector source, float range)
 	}
 }
 
-bool FGridData::Blocked(class AGTAIController* controller)
+bool FGridData::Blocked(class AGTCharacter* character)
 {
 	if (bStaticObstruction)
 		return true;
@@ -675,7 +675,7 @@ bool FGridData::Blocked(class AGTAIController* controller)
 	/*if (Occupant && Occupant->AsActor() != controller->GetPawn())
 		return true;*/
 
-	if (Occupant && !controller->IsSameTeam(Occupant))
+	if (Occupant && !character->IsSameTeam(Occupant))
 		return true;
 
 	return false;

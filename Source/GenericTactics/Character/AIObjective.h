@@ -16,7 +16,7 @@ class GENERICTACTICS_API UAIObjective : public UObject
 public:
 
 	UFUNCTION(BlueprintImplementableEvent)
-		bool Attempt(class AGTAIController* controller);
+		bool Attempt(class AGTCharacter* character);
 
 	UFUNCTION(BlueprintImplementableEvent, meta = (DevelopmentOnly))
 		FString GetDebugString();

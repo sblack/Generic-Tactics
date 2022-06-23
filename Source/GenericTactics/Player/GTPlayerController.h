@@ -33,9 +33,6 @@ protected:
 		bool bSelecting;
 
 	UPROPERTY(BlueprintReadOnly)
-		class AGTAIPlayer* ActiveController;
-
-	UPROPERTY(BlueprintReadOnly)
 		class AGTCharacter* ActiveCharacter;
 
 	bool bHavePath = false;
@@ -84,7 +81,7 @@ public:
 	virtual void PlayerTick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Player")
-		void ControlCharacter(class AGTAIPlayer* aiController, class AGTCharacter* chara);
+		void ControlCharacter(class AGTCharacter* chara);
 
 	void MoveCompleted();
 

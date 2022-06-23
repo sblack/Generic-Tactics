@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "PaperZDCharacter.h"
 #include "../Combat/CombatManager.h"
+#include "../Movement/NavGrid.h"
 #include "../Utility/TargetableInterface.h"
 #include "CharacterDataAsset.h"
 #include "GTCharacter.generated.h"
@@ -51,6 +52,8 @@ private:
 
 	void FinishedMoving();
 
+	const FNodeData* FindMoveData(FVector vec) const;
+
 protected:
 
 	UPROPERTY(BlueprintReadOnly)
@@ -68,9 +71,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void OnBeginTurn_Implementation();
+	void BeginTurn_Implementation();
 
-	void OnEndTurn_Implementation() {}
+	void EndTurn_Implementation();
 
 public:
 	/** flip sprite left-right */
@@ -100,6 +103,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		uint8 Team = 1;
 
+	UFUNCTION(BlueprintPure)
+		bool IsPartyCharacter() const { return Team == 0; }
+
 	//UPROPERTY(BlueprintReadWrite)
 	//	EAnimState AnimState = EAnimState::Idle;
 
@@ -110,6 +116,15 @@ public:
 
 	//UFUNCTION(BlueprintPure, Category = "Combat")
 	//	EActionAnim GetActionAnim();
+
+	UPROPERTY(BlueprintReadOnly)
+		float Initiative = -1;
+
+	UPROPERTY(BlueprintReadOnly)
+		bool bIsMyTurn;
+
+	TArray< TArray<FNodeData>> MoveGrid;
+	int MoveDataID;
 
 	// Sets default values for this character's properties
 	AGTCharacter(const FObjectInitializer& ObjectInitializer);
@@ -126,11 +141,11 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Combat")
-		void OnBeginTurn();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
+		void BeginTurn();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Combat")
-		void OnEndTurn();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
+		void EndTurn();
 
 	UFUNCTION(BlueprintPure, Category = "Character")
 		FORCEINLINE class AGTAIController* GetTacticsAI();
@@ -176,8 +191,14 @@ public:
 
 	virtual void OnHoverEnd() override;
 
+	bool GetPathBack(FVector destination, TArray<FVector>& pathBack) const;
+
 	void StartMoving(TArray<FVector> path);
 
+	UFUNCTION(BlueprintPure, Category = "Tactics")
+		TArray<FNodeData> GetReachableArea();
+
+	bool IsSameTeam(ITargetable target);
 
 	//virtual void PostLoad() override;
 };

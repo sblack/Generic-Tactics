@@ -14,14 +14,6 @@ class GENERICTACTICS_API AGTAIPlayer : public AGTAIController
 {
 	GENERATED_BODY()
 protected:
-	virtual void BeginTurn_Implementation() override;
-
-	virtual void EndTurn_Implementation() override;
-
-	virtual bool UseAI() override { return false; }
 
 public:
-	//virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
-
-	virtual bool GetPathBack(FVector destination, TArray<FVector>& pathBack) const override;
 };

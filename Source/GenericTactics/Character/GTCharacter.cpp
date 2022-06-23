@@ -3,15 +3,18 @@
 
 #include "GTCharacter.h"
 #include "GTAIController.h"
-#include "../Utility/GTBFL.h"
-#include "../Movement/NavGrid.h"
+//#include "../Combat/CombatManager.h"
+//#include "../Movement/NavGrid.h"
 #include "../Player/CameraPawn.h"
 #include "../Player/GTPlayerController.h"
+#include "../UI/GTHUDCode.h"
+#include "../Utility/GTBFL.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "PaperFlipbookComponent.h"
 #include "PaperSpriteComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "TimerManager.h"
 
 
 AGTCharacter::AGTCharacter(const FObjectInitializer& ObjectInitializer)
@@ -110,7 +113,7 @@ void AGTCharacter::BeginPlay()
 		UE_LOG(LogTemp, Log, TEXT("Building %s from Scratch"), *GetName());
 		CharacterData = UCharacterDataAsset::NewCharacter();
 
-		if (Team != 0)
+		if (!IsPartyCharacter())
 		{
 			CharacterData->BodyColorsHSL = CharacterData->BodyColorsHSL.ChangeTeamHue(0, CharacterData->BodyAsset->TeamColors);
 			CharacterData->HatColorsHSL = CharacterData->HatColorsHSL.ChangeTeamHue(0, CharacterData->HatAsset->TeamColors[CharacterData->HatIndex % 10]);
@@ -121,20 +124,98 @@ void AGTCharacter::BeginPlay()
 	InitMaterials();
 	FrontBackFlip();
 
+	Initiative = RollInitiative();
+	MoveDataID = -1;
+	bIsMyTurn = false;
+
 	Super::BeginPlay();
 }
 
-void AGTCharacter::OnBeginTurn_Implementation()
+void AGTCharacter::BeginTurn_Implementation()
 {
+	UE_LOG(LogTemp, Log, TEXT("Begin Turn %s"), *GetName());
 	if (bDead)
 	{
-		OnEndTurn();
+		UE_LOG(LogTemp, Log, TEXT("%s is dead, ending turn"), *GetName());
+		EndTurn();
 		return;
 	}
-	CurrentAP += 5;
+	CurrentAP = 5;
 	/*CurrentAP += Stats->MaxAP.TotalValue;
 	if (CurrentAP > Stats->MaxAP.TotalValue * 1.5f)
 		CurrentAP = Stats->MaxAP.TotalValue * 1.5f;*/
+
+	bIsMyTurn = true;
+	if (ANavGrid::Instance == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Tactics Grid"));
+		return;
+	}
+	if (ACameraPawn::Instance == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Camera"));
+		return;
+	}
+	if (UGTHUDCode::Instance == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No HUD"));
+		return;
+	}
+
+	ANavGrid::MoveDataID++;
+	ACameraPawn::Instance->SetActorLocation(GetActorLocation());
+	UGTHUDCode::Instance->ShowCharacterInfo(this);
+
+	if(IsPartyCharacter())
+	{
+		AGTPlayerController::Instance->ControlCharacter(this);
+		ANavGrid::Instance->ShowMoveRange(this);
+		UGTHUDCode::Instance->ShowHideCommandMenu(this);
+	}
+	else
+		ANavGrid::Instance->GenerateMoveData(this);
+
+
+	if (CharacterData && !IsPartyCharacter()) //TODO: allow for AI control on Party Characters?
+	{
+		bool bEndTurn = true; //if AI can't perform any objectives, end turn
+		for (int i = 0; i < CharacterData->AIObjectives.Num(); i++)
+		{
+			if (CharacterData->AIObjectives[i]->Attempt(this))
+			{
+				bEndTurn = false;
+				UE_LOG(LogTemp, Log, TEXT("%s successful"), *CharacterData->AIObjectives[i]->GetDebugString());
+				break;
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("%s failed"), *CharacterData->AIObjectives[i]->GetDebugString());
+			}
+		}
+
+		if (bEndTurn)
+		{
+			UE_LOG(LogTemp, Log, TEXT("all objectives impossible, ending turn"));
+			//EndTurn();
+
+			FTimerHandle TimerHandle;
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
+		}
+	}
+}
+
+void AGTCharacter::EndTurn_Implementation()
+{
+	UE_LOG(LogTemp, Log, TEXT("End Turn %s"), *GetName());
+	bIsMyTurn = false;
+
+	if(IsPartyCharacter())
+	{
+		ANavGrid::Instance->ShowMoveRange(nullptr);
+		UGTHUDCode::Instance->ShowHideCommandMenu(nullptr);
+	}
+
+	UCombatManager::AdvanceInitiative();
 }
 
 void AGTCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -215,6 +296,47 @@ void AGTCharacter::OnHoverEnd()
 	GetSprite()->SetSpriteColor(FLinearColor(0, 0, 0));
 }
 
+bool AGTCharacter::GetPathBack(FVector destination, TArray<FVector>& pathBack) const
+{
+	UE_LOG(LogTemp, Log, TEXT("%s GetPathBack"), *GetName());
+	destination = ANavGrid::Instance->AlignToGrid(destination);
+	const FNodeData* data = FindMoveData(destination);
+	if (data == nullptr)
+	{
+		//destination may not be in movedata due to range, so no error message
+		UE_LOG(LogTemp, Log, TEXT("PathBack failed: destination %s not found in MoveData"), *destination.ToCompactString());
+		UE_LOG(LogTemp, Log, TEXT("MoveGrid.Num() = %d"), MoveGrid.Num());
+		return false;
+	}
+
+	pathBack.Emplace(destination);
+
+	int sanity = 0;
+	while (data->Value != 0)
+	{
+		//UE_LOG(LogTemp, Log, TEXT("PathBack: %s %f"), *data->Location.ToCompactString(), data->Value);
+		data = FindMoveData(data->Origin);
+		if (data == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("PathBack failed: origin not found in MoveData"));
+			return false;
+		}
+
+		pathBack.EmplaceAt(0, data->Location);
+
+		if (++sanity > 100)
+		{
+			UE_LOG(LogTemp, Error, TEXT("PathBack failed: sanity"));
+			return false;
+		}
+	}
+
+	if(IsPartyCharacter())
+		ANavGrid::Instance->ShowPath(pathBack);
+
+	return true;
+}
+
 void AGTCharacter::StartMoving(TArray<FVector> path)
 {
 	bIsMoving = true;
@@ -227,6 +349,38 @@ void AGTCharacter::StartMoving(TArray<FVector> path)
 	SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
 	ANavGrid::RemoveActorFromGrid(this);
 	ACameraPawn::Instance->AttachCamera(this);
+}
+
+TArray<FNodeData> AGTCharacter::GetReachableArea()
+{
+	ANavGrid::Instance->GenerateMoveData(this);
+
+	TArray<FNodeData> result;
+	for (int i = 0; i < MoveGrid.Num(); i++)
+	{
+		for (int j = 0; j < MoveGrid[i].Num(); j++)
+		{
+
+			if (!MoveGrid[i][j].Occupied && MoveGrid[i][j].Value <= CurrentAP)
+				result.Add(MoveGrid[i][j]);
+		}
+	}
+
+	return result;
+}
+
+bool AGTCharacter::IsSameTeam(ITargetable target)
+{
+	AGTCharacter* targetCharacter = Cast<AGTCharacter>(target->AsActor());
+	if (!targetCharacter)
+		return false;
+
+	return targetCharacter->Team == Team;
+}
+
+void AGTCharacter::QueueAction(FVector destination, FActionData actionData)
+{
+	ActionInProgress = actionData;
 }
 
 void AGTCharacter::FinishedMoving()
@@ -245,18 +399,45 @@ void AGTCharacter::FinishedMoving()
 	ANavGrid::AddActorToGrid(this);
 	ANavGrid::MoveDataID++;
 	ACameraPawn::Instance->AttachCamera(nullptr);
-	if(Team == 0) // Party
+	if(IsPartyCharacter())
 		AGTPlayerController::Instance->MoveCompleted();
 
 	if (CurrentAP < 1) //TODO: replace 1 with minAP?
-		GetTacticsAI()->EndTurn();
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s AP is %f, ending turn"), *GetName(), CurrentAP);
+		EndTurn();
+	}
 	else
 	{
-		if(Team == 0) // Party
-			ANavGrid::Instance->ShowMoveRange(GetTacticsAI()); //GenMoveData is part of this
+		if(IsPartyCharacter())
+			ANavGrid::Instance->ShowMoveRange(this); //GenMoveData is part of this
 		else
-			ANavGrid::Instance->GenerateMoveData(GetTacticsAI());
+			ANavGrid::Instance->GenerateMoveData(this);
 	}
+}
+
+const FNodeData* AGTCharacter::FindMoveData(FVector vec) const
+{
+	for (int i = 0; i < MoveGrid.Num(); i++)
+	{
+		if (MoveGrid[i].Num() == 0)
+		{
+			continue;
+		}
+
+		if (MoveGrid[i][0].Location.X == vec.X)
+		{
+			for (int j = 0; j < MoveGrid[i].Num(); j++)
+			{
+				if (MoveGrid[i][j].Location.Y == vec.Y)
+					return &(MoveGrid[i][j]);
+			}
+
+			return nullptr;
+		}
+	}
+
+	return nullptr;
 }
 
 void AGTCharacter::Tick(float DeltaTime)

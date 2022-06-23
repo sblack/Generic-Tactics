@@ -71,10 +71,9 @@ void AGTPlayerController::PlayerTick(float DeltaTime)
 	}
 }
 
-void AGTPlayerController::ControlCharacter(class AGTAIPlayer* aiController, class AGTCharacter* chara)
+void AGTPlayerController::ControlCharacter(class AGTCharacter* chara)
 {
 	ActiveCharacter = chara;
-	ActiveController = aiController;
 }
 
 void AGTPlayerController::MoveCompleted()
@@ -100,7 +99,7 @@ void AGTPlayerController::BeginTargetMove()
 {
 	bTargetMove = true;
 	SelectedLocation = FVector(0, 0, -1000);
-	ANavGrid::Instance->ShowMoveRange(ActiveController);
+	ANavGrid::Instance->ShowMoveRange(ActiveCharacter);
 }
 
 void AGTPlayerController::BeginTargetAction()
@@ -192,12 +191,12 @@ void AGTPlayerController::OnLeftClickUp()
 		OnLeftClickUpPre();
 	else
 	{
-		if (bMoving || !ActiveController || UCombatManager::IsPerformingActions())
+		if (bMoving || !ActiveCharacter || UCombatManager::IsPerformingActions())
 			return;
 		OnLeftClickUpCombat();
 		return;
 	}
-	if (bMoving || !ActiveController)
+	if (bMoving || !ActiveCharacter)
 		return;
 	OnLeftClickUpCombat();
 
@@ -247,27 +246,27 @@ void AGTPlayerController::OnLeftClickUpCombat()
 			SelectedLocation = HoverLocation;
 
 			NavPath.Empty();
-			if (ActiveController->GetPathBack(SelectedLocation, NavPath))
+			if (ActiveCharacter->GetPathBack(SelectedLocation, NavPath))
 			{
 				bHavePath = true;
 				NavPathCost = 0;
-				UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[0].ToString());
+				//UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[0].ToString());
 				for (int i = 1; i < NavPath.Num(); i++)
 				{
 					FVector dir = NavPath[i] - NavPath[i - 1];
-					NavPathCost += ANavGrid::Instance->GetCost(NavPath[i], dir, ActiveController);
-					UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[i].ToString());
+					NavPathCost += ANavGrid::Instance->GetCost(NavPath[i], dir, ActiveCharacter);
+					//UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[i].ToString());
 				}
-				UE_LOG(LogGTPlayerController, Log, TEXT("Cost: %f"), NavPathCost);
+				//UE_LOG(LogGTPlayerController, Log, TEXT("Cost: %f"), NavPathCost);
 				FinalAP = ActiveCharacter->CurrentAP - NavPathCost;
-				UE_LOG(LogGTPlayerController, Log, TEXT("LCUC: Path Found"));
+				//UE_LOG(LogGTPlayerController, Log, TEXT("LCUC: Path Found"));
 			}
 			else
 			{
 				bHavePath = false;
 				FinalAP = ActiveCharacter->CurrentAP;
 				ANavGrid::Instance->ClearPath();
-				UE_LOG(LogGTPlayerController, Log, TEXT("LCUC: No Path"));
+				//UE_LOG(LogGTPlayerController, Log, TEXT("LCUC: No Path"));
 			}
 		}
 	}
@@ -359,27 +358,27 @@ void AGTPlayerController::MouseOverTerrain(FVector location)
 				{
 
 					NavPath.Empty();
-					if (ActiveController->GetPathBack(HoverLocation, NavPath))
+					if (ActiveCharacter->GetPathBack(HoverLocation, NavPath))
 					{
 						bHavePath = true;
 						NavPathCost = 0;
-						UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[0].ToString());
+						//UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[0].ToString());
 						for (int i = 1; i < NavPath.Num(); i++)
 						{
 							FVector dir = NavPath[i] - NavPath[i - 1];
-							NavPathCost += ANavGrid::Instance->GetCost(NavPath[i], dir, ActiveController);
-							UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[i].ToString());
+							NavPathCost += ANavGrid::Instance->GetCost(NavPath[i], dir, ActiveCharacter);
+							//UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[i].ToString());
 						}
-						UE_LOG(LogGTPlayerController, Log, TEXT("Cost: %f"), NavPathCost);
+						//UE_LOG(LogGTPlayerController, Log, TEXT("Cost: %f"), NavPathCost);
 						FinalAP = ActiveCharacter->CurrentAP - NavPathCost;
-						UE_LOG(LogGTPlayerController, Log, TEXT("MOT: Path Found"));
+						//UE_LOG(LogGTPlayerController, Log, TEXT("MOT: Path Found"));
 					}
 					else
 					{
 						bHavePath = false;
 						FinalAP = ActiveCharacter->CurrentAP;
 						ANavGrid::Instance->ClearPath();
-						UE_LOG(LogGTPlayerController, Log, TEXT("MOT: No Path"));
+						//UE_LOG(LogGTPlayerController, Log, TEXT("MOT: No Path"));
 					}
 				}
 				else if (bTargetAction)

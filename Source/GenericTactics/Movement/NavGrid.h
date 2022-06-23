@@ -31,7 +31,7 @@ public:
 	FGridData(FVector loc, ERegionTypes rt) : Location(loc), RegionType(rt) {}
 	FGridData(FVector loc, ITargetable target) : Location(loc), Occupant(target) {}
 
-	bool Blocked(class AGTAIController* controller);
+	bool Blocked(class AGTCharacter* character);
 
 	bool IsDefault();
 };
@@ -136,7 +136,7 @@ protected:
 
 	void ScanTile(int ix, int iy);
 
-	void AddNeighbors(FNodeData data, float maxCost, class AGTAIController* controller);
+	void AddNeighbors(FNodeData data, float maxCost, class AGTCharacter* character);
 		
 	void FringeInsert(FNodeData data);
 
@@ -173,16 +173,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Tactics")
 		static void RemoveActorFromGrid(TScriptInterface<ITargetableInterface> actor);
 
-	float GetCost(FVector target, FVector direction, const class AGTAIController* controller);
+	float GetCost(FVector target, FVector direction, const class AGTCharacter* character);
 
 	UFUNCTION(BlueprintPure, Category = "Tactics")
 		float GetDistance(FVector vector);
 
-	void GenerateMoveData(class AGTAIController* controller);
+	void GenerateMoveData(class AGTCharacter* character);
 
 	/** null controller clears the highlights */
 	UFUNCTION(BlueprintCallable, Category = "Tactics")
-		void ShowMoveRange(class AGTAIController* controller);
+		void ShowMoveRange(class AGTCharacter* character);
 
 	void ShowPath(TArray<FVector>& path);
 

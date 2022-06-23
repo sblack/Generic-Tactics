@@ -71,25 +71,10 @@ void UCombatManager::StartCombat()
 	TArray<AActor*> temp;
 	UE_LOG(LogTemp, Log, TEXT("Combat Manager: Sanity Check 1"));
 	//UGameplayStatics::GetAllActorsOfClass(Instance->GetWorld(), AGTAIController::StaticClass(), temp);
-	UGameplayStatics::GetAllActorsOfClass(GEngine->GameViewport->GetWorld(), AGTAIController::StaticClass(), temp);
+	UGameplayStatics::GetAllActorsOfClass(GEngine->GameViewport->GetWorld(), AGTCharacter::StaticClass(), temp);
 	if (temp.Num() == 0)
 	{
-		UE_LOG(LogTemp, Error, TEXT("0 GTAIControllers found"));
-		UGameplayStatics::GetAllActorsOfClass(GEngine->GameViewport->GetWorld(), AGTCharacter::StaticClass(), temp);
-		UE_LOG(LogTemp, Log, TEXT("%d GTCharacters found"), temp.Num());
-		if (temp.Num() > 0)
-		{
-			AGTCharacter* chara = Cast<AGTCharacter>(temp[0]);
-			if (chara->GetController())
-			{
-				UClass* aiClass = chara->GetController()->GetClass();
-				UE_LOG(LogTemp, Log, TEXT("AI class: %s"), *aiClass->GetName());
-			}
-			else
-			{
-				UE_LOG(LogTemp, Log, TEXT("AI class: NONE"));
-			}
-		}
+		UE_LOG(LogTemp, Error, TEXT("0 GTCharacters found"));
 		return;
 	}
 	//UE_LOG(LogTemp, Log, TEXT("temp.Num() = %d"), temp.Num());
@@ -98,24 +83,23 @@ void UCombatManager::StartCombat()
 	for (int i = 0; i < temp.Num(); i++)
 	{
 		bool bInserted = false;
-		AGTAIController* taic = Cast<AGTAIController>(temp[i]);
+		AGTCharacter* gtc = Cast<AGTCharacter>(temp[i]);
 		for (int j = 0; j < Instance->InitiativeQueue.Num(); j++)
 		{
-			if (taic->Initiative > Instance->InitiativeQueue[j]->Initiative)
+			if (gtc->Initiative > Instance->InitiativeQueue[j]->Initiative)
 			{
-				Instance->InitiativeQueue.Insert(taic, j);
+				Instance->InitiativeQueue.Insert(gtc, j);
 				bInserted = true;
 				break;
 			}
 		}
 		if (!bInserted)
-			Instance->InitiativeQueue.Add(taic);
+			Instance->InitiativeQueue.Add(gtc);
 
-		AGTCharacter* character = taic->GetTacticsCharacter();
-		if (character->ActorHasTag(FName("Party")))
-			Instance->PartyCharacters.Add(character);
+		if (gtc->ActorHasTag(FName("Party")))
+			Instance->PartyCharacters.Add(gtc);
 		else
-			Instance->EnemyCharacters.Add(character);
+			Instance->EnemyCharacters.Add(gtc); //TODO: ally characters would need separate array
 	}
 
 	Instance->InitiativeQueue[0]->BeginTurn();
@@ -136,12 +120,15 @@ void UCombatManager::AdvanceInitiative()
 {
 	Instance->InitiativeIndex += 1;
 	if (Instance->InitiativeIndex >= Instance->InitiativeQueue.Num())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Finished Initiative Queue, returning to start"));
 		Instance->InitiativeIndex = 0;
+	}
 
 	Instance->InitiativeQueue[Instance->InitiativeIndex]->BeginTurn();
 }
 
-class AGTAIController* UCombatManager::ActingController()
+class AGTCharacter* UCombatManager::ActingCharacter()
 {
 	return Instance->InitiativeQueue[Instance->InitiativeIndex];
 }
@@ -263,7 +250,8 @@ void UCombatManager::CompleteAction()
 	//TODO: perform reactions
 
 	Instance->bPerformingActions = false;
-	ActingController()->CheckAP();
+	if (ActingCharacter()->CurrentAP < 1) //TODO: replace 1 with minAP?
+		ActingCharacter()->EndTurn();
 }
 
 //void UCombatManager::InterruptAction()

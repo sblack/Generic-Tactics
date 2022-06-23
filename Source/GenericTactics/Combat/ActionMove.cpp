@@ -10,7 +10,7 @@ void UActionMove::Perform(class AGTCharacter* user, FVector direction)
 	Super::Perform(user, direction);
 
 	TArray<FVector> NavPath;
-	if (user->GetTacticsAI()->GetPathBack(Destination, NavPath))
+	if (user->GetPathBack(Destination, NavPath))
 	{
 		user->StartMoving(NavPath);
 	}

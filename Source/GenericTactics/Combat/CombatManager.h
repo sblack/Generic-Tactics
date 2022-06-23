@@ -41,7 +41,7 @@ protected:
 	static UCombatManager* Instance;
 
 	UPROPERTY(BlueprintReadWrite)
-		TArray<class AGTAIController*> InitiativeQueue;
+		TArray<class AGTCharacter*> InitiativeQueue;
 
 	UPROPERTY(EditDefaultsOnly, Instanced)
 		class UActionAttack* DefaultAttack;
@@ -91,7 +91,7 @@ public:
 		static void AdvanceInitiative();
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
-		static class AGTAIController* ActingController();
+		static class AGTCharacter* ActingCharacter();
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
 		static class UActionAttack* GetDefaultAttack() { return Instance->DefaultAttack; }
