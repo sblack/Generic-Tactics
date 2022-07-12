@@ -9,16 +9,16 @@ void UActionMove::Perform(class AGTCharacter* user, FVector direction)
 {
 	Super::Perform(user, direction);
 
-	TArray<FVector> NavPath;
-	if (user->GetPathBack(Destination, NavPath))
-	{
-		user->StartMoving(NavPath);
-	}
-	else
-	{
-		//ActionMove should only be created if user can actually reach destination
-		UE_LOG(LogTemp, Error, TEXT("ActionMove could not find path to destination"));
-	}
+	//TArray<FVector> NavPath;
+	//if (user->GetPathBack(Destination, NavPath))
+	//{
+	//	user->StartMoving(NavPath);
+	//}
+	//else
+	//{
+	//	//ActionMove should only be created if user can actually reach destination
+	//	UE_LOG(LogTemp, Error, TEXT("ActionMove could not find path to destination"));
+	//}
 }
 
 //void UActionMove::Resolve(class AGTCharacter* user, FVector direction)

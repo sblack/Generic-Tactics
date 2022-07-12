@@ -38,6 +38,15 @@ enum class EAttackType : uint8
 	Magic
 };
 
+UENUM(BlueprintType)
+enum class EActionAnim : uint8
+{
+	Attack,
+	Cast,
+	Block,
+	Crouch
+};
+
 /**
  * 
  */

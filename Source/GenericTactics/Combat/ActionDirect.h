@@ -13,5 +13,10 @@ UCLASS()
 class GENERICTACTICS_API UActionDirect : public UAction
 {
 	GENERATED_BODY()
-	
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced)
+		class UAreaOfEffect* Area;
+
+	TArray<FVector> GetAffectedArea(class AGTCharacter* source, FVector target) override;
+
 };

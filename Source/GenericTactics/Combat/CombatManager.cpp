@@ -27,7 +27,7 @@ void UCombatManager::AdvanceActionQueue()
 
 		if (action.Actor) //&& action.Actor is not dead
 		{
-			action.Action->Perform(action.Actor, action.RelativeLocation);
+			action.Action->Perform(action.Actor, action.Location);
 			return;
 		}
 	}
@@ -145,7 +145,7 @@ void UCombatManager::InitiateActionTarget(class UAction* action, class AGTCharac
 	FActionData act;
 	act.Actor = attacker;
 	act.Action = action;
-	act.RelativeLocation = target->GetLocation() - attacker->GetActorLocation();
+	act.Location = target->GetLocation() - attacker->GetActorLocation();
 	Instance->ActionQueue.Emplace(act);
 
 	//TODO: determine interrupts and reactions
@@ -191,7 +191,7 @@ void UCombatManager::InitiateActionLocation(class UAction* action, class AGTChar
 	FActionData act;
 	act.Actor = attacker;
 	act.Action = action;
-	act.RelativeLocation = location - attacker->GetActorLocation();
+	act.Location = location - attacker->GetActorLocation();
 	Instance->ActionQueue.Emplace(act);
 
 	//TODO: determine interrupts and reactions

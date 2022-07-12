@@ -15,17 +15,14 @@ struct FActionData
 {
 	GENERATED_USTRUCT_BODY()
 public:
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 		class UAction* Action;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 		class AGTCharacter* Actor;
 
-	UPROPERTY(BlueprintReadOnly)
-		TScriptInterface<ITargetableInterface> Target;
-
-	UPROPERTY(BlueprintReadOnly)
-		FVector RelativeLocation;
+	UPROPERTY(BlueprintReadWrite)
+		FVector Location;
 
 };
 

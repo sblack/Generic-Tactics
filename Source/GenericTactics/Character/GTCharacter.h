@@ -6,6 +6,7 @@
 #include "PaperZDCharacter.h"
 #include "../Combat/CombatManager.h"
 #include "../Movement/NavGrid.h"
+#include "../Utility/GTBFL.h"
 #include "../Utility/TargetableInterface.h"
 #include "CharacterDataAsset.h"
 #include "GTCharacter.generated.h"
@@ -76,6 +77,13 @@ protected:
 	void EndTurn_Implementation();
 
 public:
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced)
+		class UActionAttack* DefaultMeleeAttack;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced)
+		class UActionAttack* DefaultRangedAttack;
+
 	/** flip sprite left-right */
 	UPROPERTY(BlueprintReadOnly)
 		bool bMirrored;
@@ -156,7 +164,7 @@ public:
 
 	virtual int32 GetMaxHealth() const override;
 
-	/*UFUNCTION(BlueprintCallable, Category = "Combat")
+	UFUNCTION(BlueprintCallable, Category = "Combat")
 		void ResolveAction();
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
@@ -165,7 +173,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
 		void PlayActionAnim(EActionAnim anim);
 
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
+	/*UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
 		void PlayHitAnim(bool bMajor);*/
 
 	float RollInitiative();
@@ -178,27 +186,33 @@ public:
 
 	virtual void OnHit(bool bMajor) override;
 
-	/*UFUNCTION(BlueprintPure, Category = "Combat")
-		class UActionAttack* GetMainAttack();
-
-	UFUNCTION(BlueprintPure, Category = "Combat")
-		class UActionAttack* GetOffAttack();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Combat")
+	/*UFUNCTION(BlueprintImplementableEvent, Category = "Combat")
 		void SetWeaponSprite(class UPaperSprite* weaponSprite);*/
 
 	virtual void OnHoverStart() override;
 
 	virtual void OnHoverEnd() override;
 
-	bool GetPathBack(FVector destination, TArray<FVector>& pathBack) const;
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		bool GetPathTo(FVector destination, FNavPath& path);
 
-	void StartMoving(TArray<FVector> path);
+	void StartMoving(FNavPath path);
 
 	UFUNCTION(BlueprintPure, Category = "Tactics")
 		TArray<FNodeData> GetReachableArea();
 
+	/** @param target Target location 
+	 @param range Desired distance from target */
+	UFUNCTION(BlueprintPure, Category = "Tactics")
+		FNodeData NearestReachableLocationToTarget(FVector target, float range);
+
 	bool IsSameTeam(ITargetable target);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		void QueueAction(FNavPath path, FActionData actionData);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		TArray<class UActionAttack*> GetAllAttacks();
 
 	//virtual void PostLoad() override;
 };

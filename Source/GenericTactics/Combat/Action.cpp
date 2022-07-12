@@ -2,9 +2,10 @@
 
 
 #include "Action.h"
-#include "CombatManager.h"
+//#include "CombatManager.h"
 #include "../Character/GTCharacter.h"
-#include "../Items/ItemWeapon.h"
+//#include "../Items/ItemWeapon.h"
+#include "../Movement/NavGrid.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UAction::UAction()
@@ -15,10 +16,15 @@ UAction::UAction()
 	}
 }
 
-EActionUsable UAction::CanUseTarget(class AGTCharacter* user, TScriptInterface<ITargetableInterface> target)
+EActionUsable UAction::CanUseTarget(class AGTCharacter* user, FVector target)
 {
-	if (!user || !target)
+	if (!user)
 		return EActionUsable::Error;
+
+	if (ANavGrid::Instance->GetDistance(target - user->GetActorLocation()) > Range + .5)
+	{
+		return EActionUsable::OutOfRange;
+	}
 
 	for (int i = 0; i < (int)EVitals::COUNT; i++)
 	{
@@ -29,31 +35,22 @@ EActionUsable UAction::CanUseTarget(class AGTCharacter* user, TScriptInterface<I
 	return EActionUsable::Usable;
 }
 
-void UAction::Perform(class AGTCharacter* user, FVector direction)
+void UAction::Perform(class AGTCharacter* user, FVector target)
 {
-	if (!direction.IsZero())
-	{
-		user->SetActorRotation(UKismetMathLibrary::MakeRotFromX(direction));
-	}
+	if (!user) return;
 
-	if (GetOuter()->IsA<UItemWeapon>())
-	{
-		//user->SetWeaponSprite((Cast<UItemWeapon>(GetOuter()))->Sprite);
-	}
-
-	user->ActionInProgress.Action = this;
-	user->ActionInProgress.RelativeLocation = direction;
-	//user->PlayActionAnim(Anim);
-	user->CurrentAP -= APCost;
-
-	for (int i = 0; i < (int)EVitals::COUNT; i++)
-	{
-		//if (VitalCosts[(EVitals)i] > 0)
-		//	user->Stats->CurrentVitals[(EVitals)i] -= VitalCosts[(EVitals)i];
-	}
+	user->SetActorRotation(((target - user->GetActorLocation()) * FVector(1, 1, 0)).ToOrientationRotator());
+	user->PlayActionAnim(Anim);
 }
 
-void UAction::Resolve(class AGTCharacter* user, FVector direction)
+void UAction::Resolve(class AGTCharacter* user, FVector target)
 {
-	UE_LOG(LogTemp, Log, TEXT("Resolve"));
+	if (!user) return;
+}
+
+TArray<FVector> UAction::GetAffectedArea(class AGTCharacter* source, FVector target)
+{
+	TArray<FVector> result;
+	result.Add(target);
+	return result;
 }

@@ -3,12 +3,12 @@
 
 #include "GTCharacter.h"
 #include "GTAIController.h"
+#include "../Combat/Action.h"
 //#include "../Combat/CombatManager.h"
 //#include "../Movement/NavGrid.h"
 #include "../Player/CameraPawn.h"
 #include "../Player/GTPlayerController.h"
 #include "../UI/GTHUDCode.h"
-#include "../Utility/GTBFL.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "PaperFlipbookComponent.h"
@@ -107,6 +107,8 @@ void AGTCharacter::BeginPlay()
 	if (CharacterData)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Building from Data"));
+
+		CharacterData = UCharacterDataAsset::RandomCopyCharacter(CharacterData, 0);
 	}
 	else
 	{
@@ -196,7 +198,6 @@ void AGTCharacter::BeginTurn_Implementation()
 		if (bEndTurn)
 		{
 			UE_LOG(LogTemp, Log, TEXT("all objectives impossible, ending turn"));
-			//EndTurn();
 
 			FTimerHandle TimerHandle;
 			GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
@@ -244,6 +245,52 @@ int32 AGTCharacter::GetMaxHealth() const
 		return health->TotalValue;*/
 
 	return 0;
+}
+
+void AGTCharacter::ResolveAction()
+{
+	if (ActionInProgress.Action)
+		ActionInProgress.Action->Resolve(this, ActionInProgress.Location);
+	else
+		CompleteAction();
+}
+
+void AGTCharacter::CompleteAction()
+{
+	if (IsPartyCharacter())
+	{
+		ANavGrid::Instance->ShowMoveRange(this);
+		UGTHUDCode::Instance->ShowHideCommandMenu(this);
+	}
+	else
+		ANavGrid::Instance->GenerateMoveData(this);
+
+
+	if (CharacterData && !IsPartyCharacter()) //TODO: allow for AI control on Party Characters?
+	{
+		bool bEndTurn = true; //if AI can't perform any objectives, end turn
+		for (int i = 0; i < CharacterData->AIObjectives.Num(); i++)
+		{
+			if (CharacterData->AIObjectives[i]->Attempt(this))
+			{
+				bEndTurn = false;
+				UE_LOG(LogTemp, Log, TEXT("%s successful"), *CharacterData->AIObjectives[i]->GetDebugString());
+				break;
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("%s failed"), *CharacterData->AIObjectives[i]->GetDebugString());
+			}
+		}
+
+		if (bEndTurn)
+		{
+			UE_LOG(LogTemp, Log, TEXT("all objectives impossible, ending turn"));
+
+			FTimerHandle TimerHandle;
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
+		}
+	}
 }
 
 float AGTCharacter::RollInitiative()
@@ -296,9 +343,9 @@ void AGTCharacter::OnHoverEnd()
 	GetSprite()->SetSpriteColor(FLinearColor(0, 0, 0));
 }
 
-bool AGTCharacter::GetPathBack(FVector destination, TArray<FVector>& pathBack) const
+bool AGTCharacter::GetPathTo(FVector destination, FNavPath& path)
 {
-	UE_LOG(LogTemp, Log, TEXT("%s GetPathBack"), *GetName());
+	UE_LOG(LogTemp, Log, TEXT("%s GetPathTo %s"), *GetName(), *destination.ToString());
 	destination = ANavGrid::Instance->AlignToGrid(destination);
 	const FNodeData* data = FindMoveData(destination);
 	if (data == nullptr)
@@ -309,10 +356,11 @@ bool AGTCharacter::GetPathBack(FVector destination, TArray<FVector>& pathBack) c
 		return false;
 	}
 
-	pathBack.Emplace(destination);
+	path.Path.Emplace(destination);
+	path.Cost = data->TotalCost;
 
 	int sanity = 0;
-	while (data->Value != 0)
+	while (data->TotalCost != 0)
 	{
 		//UE_LOG(LogTemp, Log, TEXT("PathBack: %s %f"), *data->Location.ToCompactString(), data->Value);
 		data = FindMoveData(data->Origin);
@@ -322,7 +370,7 @@ bool AGTCharacter::GetPathBack(FVector destination, TArray<FVector>& pathBack) c
 			return false;
 		}
 
-		pathBack.EmplaceAt(0, data->Location);
+		path.Path.EmplaceAt(0, data->Location);
 
 		if (++sanity > 100)
 		{
@@ -332,19 +380,20 @@ bool AGTCharacter::GetPathBack(FVector destination, TArray<FVector>& pathBack) c
 	}
 
 	if(IsPartyCharacter())
-		ANavGrid::Instance->ShowPath(pathBack);
+		ANavGrid::Instance->ShowPath(path.Path);
 
 	return true;
 }
 
-void AGTCharacter::StartMoving(TArray<FVector> path)
+void AGTCharacter::StartMoving(FNavPath path)
 {
+	CurrentAP -= path.Cost;
 	bIsMoving = true;
 	MoveTimePassed = 0;
-	MoveSteps.Empty(path.Num() - 1);
-	for (int i = 0; i < path.Num() - 1; i++)
+	MoveSteps.Empty(path.Path.Num() - 1);
+	for (int i = 0; i < path.Path.Num() - 1; i++)
 	{
-		MoveSteps.Add(FMovementStep(path[i], path[i + 1]));
+		MoveSteps.Add(FMovementStep(path.Path[i], path.Path[i + 1]));
 	}
 	SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
 	ANavGrid::RemoveActorFromGrid(this);
@@ -361,12 +410,44 @@ TArray<FNodeData> AGTCharacter::GetReachableArea()
 		for (int j = 0; j < MoveGrid[i].Num(); j++)
 		{
 
-			if (!MoveGrid[i][j].Occupied && MoveGrid[i][j].Value <= CurrentAP)
+			if (!MoveGrid[i][j].Occupied && MoveGrid[i][j].TotalCost <= CurrentAP)
 				result.Add(MoveGrid[i][j]);
 		}
 	}
 
 	return result;
+}
+
+FNodeData AGTCharacter::NearestReachableLocationToTarget(FVector target, float range)
+{
+	float minCost = 999;
+	float minDist = 999;
+	FNodeData location;
+	TArray<FNodeData> reachable = GetReachableArea();
+	for (int i = 0; i < reachable.Num(); i++)
+	{
+		//UE_LOG(LogTemp, Log, TEXT("C: %f D: %f %s"), minCost, minDist, *reachable[i].Location.ToString());
+		float dist = FMath::Abs(ANavGrid::Instance->GetDistance(target - reachable[i].Location) - range);
+		if (dist < minDist)
+		{
+			minDist = dist;
+			minCost = reachable[i].TotalCost;
+			location = reachable[i];
+		}
+		else if (dist == minDist && reachable[i].TotalCost < minCost)
+		{
+			minCost = reachable[i].TotalCost;
+			location = reachable[i];
+		}
+	}
+
+	if (minCost == 999)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Could not find a location"));
+		return FNodeData(location);
+	}
+	//UE_LOG(LogTemp, Log, TEXT("NRLtT: %s"), *location.Location.ToString());
+	return location;
 }
 
 bool AGTCharacter::IsSameTeam(ITargetable target)
@@ -378,9 +459,43 @@ bool AGTCharacter::IsSameTeam(ITargetable target)
 	return targetCharacter->Team == Team;
 }
 
-void AGTCharacter::QueueAction(FVector destination, FActionData actionData)
+void AGTCharacter::QueueAction(FNavPath path, FActionData actionData)
 {
+	if (path.Path.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Path is empty"));
+		EndTurn();
+		return;
+	}
+	else if (path.Path.Num() == 1) //assuming that location should be the character's current location, thus don't need to move
+	{
+		ActionInProgress = actionData;
+		if (ActionInProgress.Action)
+		{
+			ActionInProgress.Action->Perform(this, ActionInProgress.Location);
+		}
+		else
+			CompleteAction();
+
+		return;
+	}
+
+	StartMoving(path);
 	ActionInProgress = actionData;
+}
+
+TArray<class UActionAttack*> AGTCharacter::GetAllAttacks()
+{
+	TArray<UActionAttack*> attacks;
+	if (DefaultMeleeAttack)
+		attacks.Add(DefaultMeleeAttack);
+	if (DefaultRangedAttack)
+		attacks.Add(DefaultRangedAttack);
+	//TODO: get weapon attacks
+	//TODO: get skill attacks
+
+
+	return attacks;
 }
 
 void AGTCharacter::FinishedMoving()
@@ -402,18 +517,12 @@ void AGTCharacter::FinishedMoving()
 	if(IsPartyCharacter())
 		AGTPlayerController::Instance->MoveCompleted();
 
-	if (CurrentAP < 1) //TODO: replace 1 with minAP?
+	if (ActionInProgress.Action)
 	{
-		UE_LOG(LogTemp, Log, TEXT("%s AP is %f, ending turn"), *GetName(), CurrentAP);
-		EndTurn();
+		ActionInProgress.Action->Perform(this, ActionInProgress.Location);
 	}
 	else
-	{
-		if(IsPartyCharacter())
-			ANavGrid::Instance->ShowMoveRange(this); //GenMoveData is part of this
-		else
-			ANavGrid::Instance->GenerateMoveData(this);
-	}
+		CompleteAction();
 }
 
 const FNodeData* AGTCharacter::FindMoveData(FVector vec) const

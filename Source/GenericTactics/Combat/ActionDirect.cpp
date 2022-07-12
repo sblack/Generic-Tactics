@@ -2,4 +2,16 @@
 
 
 #include "ActionDirect.h"
+#include "AreaOfEffect.h"
 
+TArray<FVector> UActionDirect::GetAffectedArea(class AGTCharacter* source, FVector target)
+{
+	if (Area)
+		return Area->GetTargetedSquares(source, target);
+	else
+	{
+		TArray<FVector> result;
+		result.Add(target);
+		return result;
+	}
+}

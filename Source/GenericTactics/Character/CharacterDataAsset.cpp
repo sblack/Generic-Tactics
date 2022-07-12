@@ -37,6 +37,75 @@ UCharacterDataAsset* UCharacterDataAsset::NewCharacter()
 	return FromSave(data);
 }
 
+UCharacterDataAsset* UCharacterDataAsset::RandomCopyCharacter(UCharacterDataAsset* source, float teamHue)
+{
+	/*UCharacterDataAsset* result = DuplicateObject<UCharacterDataAsset>(source, source->GetOuter());*/
+	UCharacterDataAsset* result = NewObject<UCharacterDataAsset>(source->GetOuter(), NAME_None, RF_NoFlags, source);
+
+	if(result->HairIndex == 255)
+		result->HairIndex = FMath::RandRange(0, 9);
+
+	if(result->Name.IsEmptyOrWhitespace())
+	{
+		if (result->HairIndex < 5)
+		{
+			result->Name = FText::FromStringTable("/Game/Data/Character/NamesMale", FString::Printf(TEXT("Male_%03d"), FMath::RandRange(0, 255)));
+		}
+		else
+		{
+			result->Name = FText::FromStringTable("/Game/Data/Character/NamesFemale", FString::Printf(TEXT("Female_%03d"), FMath::RandRange(0, 255)));
+		}
+	}
+
+	if(result->SkinColorHSL == FLinearColor::Transparent) // 0,0,0,0
+	{
+		float k = FMath::FRandRange(0, 3);
+		if (k < 1) 
+			result->SkinColorHSL = FLinearColor(20, .6 + k * (.375 - .6), .75 + k * (.6 - .75));
+		else if (k < 2) 
+			result->SkinColorHSL = FLinearColor(20 + (k - 1) * (28 - 20), .375 + (k - 1) * (.538 - .375), .6 + (k - 1) * (.325 - .6));
+		else 
+			result->SkinColorHSL = FLinearColor(28 + (k - 2) * (15 - 28), .538 + (k - 2) * (.5 - .538), .325 + (k - 2) * (.2 - .325));
+	}
+
+	//SkinColorHSL = FLinearColor(20, .375f, .6f);
+
+	if (result->HairColorHSL == FLinearColor::Transparent) // 0,0,0,0
+	{
+		result->HairColorHSL = FLinearColor(FMath::FRandRange(0, 60), FMath::FRandRange(0, 1),
+			((FMath::RandRange(0, 9) == 0) ? FMath::FRandRange(.8f, .9f) : FMath::FRandRange(.1f, result->SkinColorHSL.B)));
+	}
+
+	if(!result->BodyAsset)
+		result->BodyAsset = UGTGameInstance::Instance->BodyTypes[FMath::RandRange(0, UGTGameInstance::Instance->BodyTypes.Num() - 1)];
+
+	if (result->BodyColorsHSL.Color0 == FLinearColor::Transparent)
+	{
+		result->BodyColorsHSL.Color0 = UGTBFL::RGBToHSL(result->BodyAsset->DefaultColorsRGB.Color0);
+		result->BodyColorsHSL.Color1 = UGTBFL::RGBToHSL(result->BodyAsset->DefaultColorsRGB.Color1);
+		result->BodyColorsHSL.Color2 = UGTBFL::RGBToHSL(result->BodyAsset->DefaultColorsRGB.Color2);
+		result->BodyColorsHSL.Color3 = UGTBFL::RGBToHSL(result->BodyAsset->DefaultColorsRGB.Color3);
+		result->BodyColorsHSL = result->BodyColorsHSL.ChangeTeamHue(teamHue, result->BodyAsset->TeamColors);
+	}
+
+	if (!result->HatAsset)
+		result->HatAsset = UGTGameInstance::Instance->HatTypes[FMath::RandRange(0, UGTGameInstance::Instance->HatTypes.Num() - 1)];
+
+	if(result->HatIndex == 255)
+		result->HatIndex = FMath::RandRange(0, 9);
+
+	if(result->HatColorsHSL.Color0 == FLinearColor::Transparent)
+	{
+		result->HatColorsHSL.Color0 = UGTBFL::RGBToHSL(result->HatAsset->DefaultColorsRGB[result->HatIndex].Color0);
+		result->HatColorsHSL.Color1 = UGTBFL::RGBToHSL(result->HatAsset->DefaultColorsRGB[result->HatIndex].Color1);
+		result->HatColorsHSL.Color2 = UGTBFL::RGBToHSL(result->HatAsset->DefaultColorsRGB[result->HatIndex].Color2);
+		result->HatColorsHSL.Color3 = UGTBFL::RGBToHSL(result->HatAsset->DefaultColorsRGB[result->HatIndex].Color3);
+		result->HatColorsHSL = result->HatColorsHSL.ChangeTeamHue(teamHue, result->HatAsset->TeamColors[result->HatIndex % 10]);
+	}
+
+	return result;
+}
+
 void UCharacterDataAsset::PostLoad()
 {
 	Super::PostLoad();

@@ -54,7 +54,7 @@ public:
 		float Cost;
 	/** Total Cost to Tile */
 	UPROPERTY(BlueprintReadOnly)
-		float Value;
+		float TotalCost;
 
 	UPROPERTY()
 		bool Occupied;
@@ -63,10 +63,10 @@ public:
 		uint8 Dir;
 
 	FNodeData() {}
-	FNodeData(FVector loc) : Location(loc), Origin(loc), Cost(0), Value(0), Occupied(false), Dir(0) {}
-	FNodeData(FVector loc, FVector ori, float c, float v, uint8 d, bool occ) : Location(loc), Origin(ori), Cost(c), Value(v), Occupied(occ), Dir(d) {}
+	FNodeData(FVector loc) : Location(loc), Origin(loc), Cost(0), TotalCost(0), Occupied(false), Dir(0) {}
+	FNodeData(FVector loc, FVector ori, float c, float v, uint8 d, bool occ) : Location(loc), Origin(ori), Cost(c), TotalCost(v), Occupied(occ), Dir(d) {}
 
-	FNodeData(const FNodeData& node) : Location(node.Location), Origin(node.Origin), Cost(node.Cost), Value(node.Value), Occupied(node.Occupied), Dir(node.Dir) {}
+	FNodeData(const FNodeData& node) : Location(node.Location), Origin(node.Origin), Cost(node.Cost), TotalCost(node.TotalCost), Occupied(node.Occupied), Dir(node.Dir) {}
 
 	inline bool operator>(const FVector& vec) const
 	{
@@ -99,6 +99,20 @@ struct FNodeDataSort
 		else
 			return a.Location.X > b.Location.X;
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FNavPath
+{
+	GENERATED_USTRUCT_BODY()
+public:
+	TArray<FVector> Path;
+	float Cost = 0;
+
+	FNavPath() {}
+	FNavPath(TArray<FVector> path, float cost) : Path(path), Cost(cost) {}
+
+	void Empty() { Path.Empty(); Cost = 0; }
 };
 
 /**
@@ -210,4 +224,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Tactics")
 		void ShowTargeting(FVector source, float range);
+
+	void ShowTargetingArea(class AGTCharacter* source, FVector target, class UAction* action);
 };

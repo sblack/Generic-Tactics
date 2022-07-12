@@ -102,10 +102,17 @@ void AGTPlayerController::BeginTargetMove()
 	ANavGrid::Instance->ShowMoveRange(ActiveCharacter);
 }
 
-void AGTPlayerController::BeginTargetAction()
+void AGTPlayerController::BeginTargetAction(class UAction* action)
 {
+	if (!action)
+	{
+		UE_LOG(LogGTPlayerController, Error, TEXT("BeginTargetAction requires an Action"));
+		return;
+	}
 	bTargetAction = true;
 	SelectedLocation = FVector(0, 0, -1000);
+	SelectedAction = action;
+	ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, SelectedLocation, SelectedAction);
 }
 
 void AGTPlayerController::CancelTarget()
@@ -235,7 +242,6 @@ void AGTPlayerController::OnLeftClickUpCombat()
 			if (bHavePath)// && NavPathCost <= ActiveCharacter->CurrentAP)
 			{
 				bMoving = true;
-				ActiveCharacter->CurrentAP -= NavPathCost;
 				ANavGrid::Instance->ShowMoveRange(nullptr);
 				ActiveCharacter->StartMoving(NavPath);
 				UGTHUDCode::Instance->HideCommands();
@@ -246,19 +252,10 @@ void AGTPlayerController::OnLeftClickUpCombat()
 			SelectedLocation = HoverLocation;
 
 			NavPath.Empty();
-			if (ActiveCharacter->GetPathBack(SelectedLocation, NavPath))
+			if (ActiveCharacter->GetPathTo(SelectedLocation, NavPath))
 			{
 				bHavePath = true;
-				NavPathCost = 0;
-				//UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[0].ToString());
-				for (int i = 1; i < NavPath.Num(); i++)
-				{
-					FVector dir = NavPath[i] - NavPath[i - 1];
-					NavPathCost += ANavGrid::Instance->GetCost(NavPath[i], dir, ActiveCharacter);
-					//UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[i].ToString());
-				}
-				//UE_LOG(LogGTPlayerController, Log, TEXT("Cost: %f"), NavPathCost);
-				FinalAP = ActiveCharacter->CurrentAP - NavPathCost;
+				FinalAP = ActiveCharacter->CurrentAP - NavPath.Cost;
 				//UE_LOG(LogGTPlayerController, Log, TEXT("LCUC: Path Found"));
 			}
 			else
@@ -275,7 +272,8 @@ void AGTPlayerController::OnLeftClickUpCombat()
 		UE_LOG(LogGTPlayerController, Log, TEXT("   TargetAction"));
 		if (HoverLocation == SelectedLocation)
 		{
-			UCombatManager::InitiatePreparedAction(ActiveCharacter);
+			//UCombatManager::InitiatePreparedAction(ActiveCharacter);
+
 		}
 		else
 		{
@@ -358,19 +356,10 @@ void AGTPlayerController::MouseOverTerrain(FVector location)
 				{
 
 					NavPath.Empty();
-					if (ActiveCharacter->GetPathBack(HoverLocation, NavPath))
+					if (ActiveCharacter->GetPathTo(HoverLocation, NavPath))
 					{
 						bHavePath = true;
-						NavPathCost = 0;
-						//UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[0].ToString());
-						for (int i = 1; i < NavPath.Num(); i++)
-						{
-							FVector dir = NavPath[i] - NavPath[i - 1];
-							NavPathCost += ANavGrid::Instance->GetCost(NavPath[i], dir, ActiveCharacter);
-							//UE_LOG(LogGTPlayerController, Log, TEXT("%s"), *NavPath[i].ToString());
-						}
-						//UE_LOG(LogGTPlayerController, Log, TEXT("Cost: %f"), NavPathCost);
-						FinalAP = ActiveCharacter->CurrentAP - NavPathCost;
+						FinalAP = ActiveCharacter->CurrentAP - NavPath.Cost;
 						//UE_LOG(LogGTPlayerController, Log, TEXT("MOT: Path Found"));
 					}
 					else
@@ -383,7 +372,8 @@ void AGTPlayerController::MouseOverTerrain(FVector location)
 				}
 				else if (bTargetAction)
 				{
-					UCombatManager::UpdateAreaOfEffect(ActiveCharacter->GetActorLocation(), HoverLocation);
+					//UCombatManager::UpdateAreaOfEffect(ActiveCharacter->GetActorLocation(), HoverLocation);
+					ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, HoverLocation, SelectedAction);
 				}
 			}
 		}
@@ -415,7 +405,8 @@ void AGTPlayerController::MouseOverTarget(ITargetable target)
 		{
 			if (bTargetAction)
 			{
-				UCombatManager::UpdateAreaOfEffect(ActiveCharacter->GetActorLocation(), HoverLocation);
+				//UCombatManager::UpdateAreaOfEffect(ActiveCharacter->GetActorLocation(), HoverLocation);
+				ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, HoverLocation, SelectedAction);
 			}
 		}
 	}

@@ -35,9 +35,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 		class AGTCharacter* ActiveCharacter;
 
+	class UAction* SelectedAction;
+
 	bool bHavePath = false;
-	TArray<FVector> NavPath;
-	float NavPathCost;
+	struct FNavPath NavPath;
 	bool bMoving = false;
 
 	AGTPlayerController();
@@ -92,7 +93,7 @@ public:
 		void BeginTargetMove();
 
 	UFUNCTION(BlueprintCallable, Category = "Player")
-		void BeginTargetAction();
+		void BeginTargetAction(class UAction* action);
 
 	UFUNCTION(BlueprintCallable, Category = "Player")
 		void CancelTarget();

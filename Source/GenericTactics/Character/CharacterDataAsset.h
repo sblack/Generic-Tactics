@@ -90,7 +90,7 @@ public:
 
 	/** starts at 0; 255 = bald */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Appearance")
-		uint8 HairIndex;
+		uint8 HairIndex = 255;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Appearance")
 		FLinearColor HairColorHSL;
@@ -106,7 +106,7 @@ public:
 
 	/** starts at 0; 255 = hatless */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Appearance")
-		uint8 HatIndex;
+		uint8 HatIndex = 255;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Appearance")
 		FColorQuartet HatColorsHSL;
@@ -132,6 +132,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Tactics")
 		static UCharacterDataAsset* NewCharacter();
+
+	/** Creates a copy of source, randomizing unset cosmetic features */
+	UFUNCTION(BlueprintCallable, Category = "Tactics")
+		static UCharacterDataAsset* RandomCopyCharacter(UCharacterDataAsset* source, float teamHue);
 
 	virtual void PostLoad() override;
 

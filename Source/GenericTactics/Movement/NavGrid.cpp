@@ -5,6 +5,7 @@
 #include "HighlightManager.h"
 #include "../Character/GTCharacter.h"
 #include "../Character/GTAIController.h"
+#include "../Combat/Action.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Components/CapsuleComponent.h"
@@ -187,7 +188,7 @@ void ANavGrid::AddNeighbors(FNodeData data, float maxCost, class AGTCharacter* c
 		}
 
 		float cost = GetCost(vec, Offsets[d], character);
-		float value = data.Value + cost;
+		float value = data.TotalCost + cost;
 
 		if (value > maxCost)
 			continue;
@@ -197,7 +198,7 @@ void ANavGrid::AddNeighbors(FNodeData data, float maxCost, class AGTCharacter* c
 		node.Location = AlignToGrid(vec);
 		node.Origin = data.Location;
 		node.Cost = cost;
-		node.Value = value;
+		node.TotalCost = value;
 		node.Dir = d;
 		node.Occupied = (gridData.Occupant != nullptr);
 		FringeInsert(node);
@@ -206,14 +207,14 @@ void ANavGrid::AddNeighbors(FNodeData data, float maxCost, class AGTCharacter* c
 
 void ANavGrid::FringeInsert(FNodeData data)
 {
-	if (Fringe.Num() == 0 || data.Value >= Fringe[Fringe.Num() - 1].Value)
+	if (Fringe.Num() == 0 || data.TotalCost >= Fringe[Fringe.Num() - 1].TotalCost)
 	{
 		Fringe.Emplace(data);
 		return;
 	}
-	float value = data.Value + ((data.Occupied) ? .01f : (float)0);
+	float value = data.TotalCost + ((data.Occupied) ? .01f : (float)0);
 
-	if (value < Fringe[0].Value)
+	if (value < Fringe[0].TotalCost)
 	{
 		//UE_LOG(LogNavGrid, Log, TEXT("First in Fringe: %f < %f"), data.Value, Fringe[0].Value);
 		Fringe.EmplaceAt(0, data);
@@ -224,12 +225,12 @@ void ANavGrid::FringeInsert(FNodeData data)
 	while (high - low > 1)
 	{
 		int mid = (high + low) / 2;
-		if (value == Fringe[mid].Value)
+		if (value == Fringe[mid].TotalCost)
 		{
 			Fringe.EmplaceAt(mid, data);
 			return;
 		}
-		else if (value < Fringe[mid].Value)
+		else if (value < Fringe[mid].TotalCost)
 			high = mid;
 		else
 			low = mid;
@@ -353,7 +354,7 @@ float ANavGrid::GetDistance(FVector vector)
 		result = (float)x / 2 + (float)y;
 	}
 
-	UE_LOG(LogNavGrid, Log, TEXT("%s -> %f"), *vector.ToString(), result);
+	//UE_LOG(LogNavGrid, Log, TEXT("%s -> %f"), *vector.ToString(), result);
 	return result;
 }
 
@@ -415,7 +416,7 @@ void ANavGrid::GenerateMoveData(class AGTCharacter* character)
 				{
 					if (XYToIndex(character->MoveGrid[i][j].Location.Y) == dY)
 					{
-						if (character->MoveGrid[i][j].Value > data.Value)
+						if (character->MoveGrid[i][j].TotalCost > data.TotalCost)
 						{
 							character->MoveGrid[i][j] = data;
 							bAdded = true;
@@ -484,7 +485,7 @@ void ANavGrid::ShowMoveRange(class AGTCharacter* character)
 			{
 
 				//UE_LOG(LogNavGrid, Log, TEXT(" %d %d %f"), XYToIndex(controller->MoveGrid[i][j].Location.X), XYToIndex(controller->MoveGrid[i][j].Location.Y), controller->MoveGrid[i][j].Value);
-				if (character->MoveGrid[i][j].Value > maxCost || character->MoveGrid[i][j].Occupied)
+				if (character->MoveGrid[i][j].TotalCost > maxCost || character->MoveGrid[i][j].Occupied)
 				{
 					//UE_LOG(LogNavGrid, Error, TEXT("Here it is"));
 					continue;
@@ -663,6 +664,27 @@ void ANavGrid::ShowTargeting(FVector source, float range)
 	for (int i = 0; i < targetable.Num(); i++)
 	{
 		HighlightManager->SetTileColor(targetable[i], UHighlightManager::TargetColor);
+	}
+}
+
+void ANavGrid::ShowTargetingArea(class AGTCharacter* source, FVector target, class UAction* action)
+{
+	ShowMoveRange(nullptr);
+
+	TArray<FVector> targetable = GetWithinDistance(source->GetActorLocation(), action->Range);
+	bool bValidTarget = false;
+	for (int i = 0; i < targetable.Num(); i++)
+	{
+		HighlightManager->SetTileColor(targetable[i], UHighlightManager::ReachColor);
+		if (targetable[i] == target)
+			bValidTarget = true;
+	}
+
+	if (bValidTarget)
+	{
+		TArray<FVector> area = action->GetAffectedArea(source, target);
+		for (int i = 0 ; i < area.Num(); i++)
+			HighlightManager->SetTileColor(area[i], UHighlightManager::TargetColor);
 	}
 }
 

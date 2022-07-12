@@ -9,7 +9,7 @@
 /**
  * Individual goals that AI attempts according to priority.
  */
-UCLASS(ABSTRACT, Blueprintable)
+UCLASS(ABSTRACT, Blueprintable, EditInlineNew)
 class GENERICTACTICS_API UAIObjective : public UObject
 {
 	GENERATED_BODY()
