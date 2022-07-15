@@ -42,7 +42,6 @@ private:
 	/** scale of sprite when first spawned; used for flipping left-right */
 	FVector OriginalScale;
 
-	bool bIsMoving = false;
 	float MoveTimePassed = 0;
 	TArray<FMovementStep> MoveSteps;
 
@@ -92,6 +91,10 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		bool bFrontView;
 
+	/** is moving */
+	UPROPERTY(BlueprintReadOnly)
+		bool bIsMoving = false;
+
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, meta = (ExposeOnSpawn))
 		class UCharacterDataAsset* CharacterData;
 
@@ -100,6 +103,10 @@ public:
 
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	//	class UCharacterEquipmentComponent* Equipment;
+
+	/** Use full guard idle instead of half guard*/
+	UFUNCTION(BlueprintPure)
+		bool UseFullGuard();
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		FText CharacterName;

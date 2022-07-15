@@ -17,6 +17,11 @@
 #include "TimerManager.h"
 
 
+bool AGTCharacter::UseFullGuard()
+{
+	return (CharacterData->Shield != nullptr);
+}
+
 AGTCharacter::AGTCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -402,9 +407,14 @@ void AGTCharacter::StartMoving(FNavPath path)
 
 TArray<FNodeData> AGTCharacter::GetReachableArea()
 {
+	TArray<FNodeData> result;
+	if (!ANavGrid::Instance)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ANavGrid Instance is null"));
+		return result;
+	}
 	ANavGrid::Instance->GenerateMoveData(this);
 
-	TArray<FNodeData> result;
 	for (int i = 0; i < MoveGrid.Num(); i++)
 	{
 		for (int j = 0; j < MoveGrid[i].Num(); j++)
