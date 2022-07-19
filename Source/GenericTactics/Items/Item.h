@@ -23,6 +23,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		class UTexture2D* Image;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		FLinearColor Color0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		FLinearColor Color1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		FLinearColor Color2;
+
 	UPROPERTY(BlueprintReadWrite, Transient)
 		class UUserWidget* ItemSlotWidget;
 

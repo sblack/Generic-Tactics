@@ -40,6 +40,8 @@ void AGTCharacter::PostInitializeComponents()
 	HairSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Hair")));
 	HatFrontSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("HatF")));
 	HatBackSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("HatB")));
+	ShieldSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Shield")));
+	WeaponSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Weapon")));
 }
 
 void AGTCharacter::InitMaterials()
@@ -103,6 +105,9 @@ void AGTCharacter::FrontBackFlip()
 	HairSprite->AttachToComponent(GetSprite(), atr, headSocket);
 	HatFrontSprite->AttachToComponent(GetSprite(), atr, headSocket);
 	HatBackSprite->AttachToComponent(GetSprite(), atr, headSocket);
+
+	WeaponSprite->AttachToComponent(GetSprite(), atr, bFrontView ? FName(TEXT("Weapon_F")) : FName(TEXT("Weapon_B")));
+	ShieldSprite->AttachToComponent(GetSprite(), atr, bFrontView ? FName(TEXT("Shield_F")) : FName(TEXT("Shield_B")));
 }
 
 void AGTCharacter::BeginPlay()

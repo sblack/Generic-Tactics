@@ -39,6 +39,12 @@ private:
 	/** reference to the hat back sprite component in child class */
 	class UPaperSpriteComponent* HatBackSprite;
 
+	/** reference to the shield sprite component in child class */
+	class UPaperSpriteComponent* ShieldSprite;
+
+	/** reference to the weapon sprite component in child class */
+	class UPaperSpriteComponent* WeaponSprite;
+
 	/** scale of sprite when first spawned; used for flipping left-right */
 	FVector OriginalScale;
 
