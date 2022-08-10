@@ -88,26 +88,59 @@ void AGTCharacter::InitMaterials()
 void AGTCharacter::FrontBackFlip()
 {
 	float diff = FMath::Fmod((GetActorRotation().Yaw - UGameplayStatics::GetPlayerCameraManager(this, 0)->GetCameraRotation().Yaw + 360.0f), 360.0f);
-	bFrontView = (diff >= 90) && (diff < 270);
-	bMirrored = diff >= 180;
-	if(bMirrored)
-		GetSprite()->SetRelativeScale3D(OriginalScale * FVector(-1, 1, 1));
-	else
-		GetSprite()->SetRelativeScale3D(OriginalScale);
+	float bodyFB, headFB, headFlip, weaponFlip;
+	FName headSocket, shieldSocket, weaponSocket;
+	/*if (diff < 90) {
+		bodyFB = 3; headFB = 1; headFlip = -1; weaponFlip = 1;
+		headSocket = FName(TEXT("Head_3")); shieldSocket = FName(TEXT("Shield_3")); weaponSocket = FName(TEXT("Weapon_3"));
+	}
+	else if (diff < 180) {
+		bodyFB = 0; headFB = 0; headFlip = 1; weaponFlip = 1;
+		headSocket = FName(TEXT("Head_0")); shieldSocket = FName(TEXT("Shield_0")); weaponSocket = FName(TEXT("Weapon_0"));
+	}
+	else if (diff < 270) {
+		bodyFB = 1; headFB = 0; headFlip = -1; weaponFlip = -1;
+		headSocket = FName(TEXT("Head_1")); shieldSocket = FName(TEXT("Shield_1")); weaponSocket = FName(TEXT("Weapon_1"));
+	}
+	else {
+		bodyFB = 2; headFB = 1; headFlip = 1; weaponFlip = -1;
+		headSocket = FName(TEXT("Head_2")); shieldSocket = FName(TEXT("Shield_2")); weaponSocket = FName(TEXT("Weapon_2"));
+	}*/
+	if (diff < 90) {
+		bodyFB = 2; headFB = 1; headFlip = 1; weaponFlip = -1;
+		headSocket = FName(TEXT("Head_2")); shieldSocket = FName(TEXT("Shield_2")); weaponSocket = FName(TEXT("Weapon_2"));
+	}
+	else if (diff < 180) {
+		bodyFB = 1; headFB = 0; headFlip = -1; weaponFlip = -1;
+		headSocket = FName(TEXT("Head_1")); shieldSocket = FName(TEXT("Shield_1")); weaponSocket = FName(TEXT("Weapon_1"));
+	}
+	else if (diff < 270) {
+		bodyFB = 0; headFB = 0; headFlip = 1; weaponFlip = 1;
+		headSocket = FName(TEXT("Head_0")); shieldSocket = FName(TEXT("Shield_0")); weaponSocket = FName(TEXT("Weapon_0"));
+	}
+	else {
+		bodyFB = 3; headFB = 1; headFlip = -1; weaponFlip = 1;
+		headSocket = FName(TEXT("Head_3")); shieldSocket = FName(TEXT("Shield_3")); weaponSocket = FName(TEXT("Weapon_3"));
+	}
 
-	float frontBackDMIScalar = bFrontView ? 0 : 1;
-	FName headSocket = bFrontView ? FName(TEXT("Head_F")) : FName(TEXT("Head_B"));
-	BodyDMI->SetScalarParameterValue(TEXT("FrontBack"), frontBackDMIScalar);
-	HairDMI->SetScalarParameterValue(TEXT("FrontBack"), frontBackDMIScalar);
-	HatFrontDMI->SetScalarParameterValue(TEXT("FrontBack"), frontBackDMIScalar);
-	HatBackDMI->SetScalarParameterValue(TEXT("FrontBack"), frontBackDMIScalar);
+	BodyDMI->SetScalarParameterValue(TEXT("FrontBack"), bodyFB);
+	HairDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
+	HatFrontDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
+	HatBackDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
 	FAttachmentTransformRules atr = FAttachmentTransformRules(EAttachmentRule::KeepRelative, true);
 	HairSprite->AttachToComponent(GetSprite(), atr, headSocket);
 	HatFrontSprite->AttachToComponent(GetSprite(), atr, headSocket);
 	HatBackSprite->AttachToComponent(GetSprite(), atr, headSocket);
 
-	WeaponSprite->AttachToComponent(GetSprite(), atr, bFrontView ? FName(TEXT("Weapon_F")) : FName(TEXT("Weapon_B")));
-	ShieldSprite->AttachToComponent(GetSprite(), atr, bFrontView ? FName(TEXT("Shield_F")) : FName(TEXT("Shield_B")));
+	WeaponSprite->AttachToComponent(GetSprite(), atr, weaponSocket);
+	ShieldSprite->AttachToComponent(GetSprite(), atr, shieldSocket);
+
+	HairSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
+	HatFrontSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
+	HatBackSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
+
+	WeaponSprite->SetRelativeScale3D(FVector(weaponFlip, 1, 1));
+	ShieldSprite->SetRelativeScale3D(FVector(weaponFlip, 1, 1));
 }
 
 void AGTCharacter::BeginPlay()
