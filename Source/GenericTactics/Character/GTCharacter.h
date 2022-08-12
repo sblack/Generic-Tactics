@@ -45,6 +45,9 @@ private:
 	/** reference to the weapon sprite component in child class */
 	class UPaperSpriteComponent* WeaponSprite;
 
+	/** reference to the hand sprite component in child class */
+	class UPaperFlipbookComponent* HandSprite;
+
 	/** scale of sprite when first spawned; used for flipping left-right */
 	FVector OriginalScale;
 
@@ -60,6 +63,9 @@ private:
 
 	const FNodeData* FindMoveData(FVector vec) const;
 
+	UFUNCTION()
+	void OnAnimSequenceUpdated(const class UPaperZDAnimSequence* From, const class UPaperZDAnimSequence* To, float CurrentProgress);
+
 protected:
 
 	UPROPERTY(BlueprintReadOnly)
@@ -73,6 +79,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 		class UMaterialInstanceDynamic* HatBackDMI;
+
+	UPROPERTY(BlueprintReadOnly)
+		class UMaterialInstanceDynamic* HandDMI;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

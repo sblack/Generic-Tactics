@@ -15,6 +15,9 @@
 #include "PaperSpriteComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "TimerManager.h"
+#include "PaperZDAnimInstance.h"
+#include "AnimSequences\PaperZDAnimSequence.h"
+#include "AnimSequences\Players\PaperZDAnimPlayer.h"
 
 
 bool AGTCharacter::UseFullGuard()
@@ -42,14 +45,22 @@ void AGTCharacter::PostInitializeComponents()
 	HatBackSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("HatB")));
 	ShieldSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Shield")));
 	WeaponSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Weapon")));
+	HandSprite = Cast<UPaperFlipbookComponent>(GetDefaultSubobjectByName(TEXT("Hand")));
 }
 
 void AGTCharacter::InitMaterials()
 {
 	BodyDMI = GetSprite()->CreateDynamicMaterialInstance(0);
 	BodyDMI->SetTextureParameterValue(TEXT("Texture"), CharacterData->BodyAsset->Image);
-	BodyDMI->SetVectorParameterValue(TEXT("ColorSkin"), UGTBFL::HSLtoRGB(CharacterData->SkinColorHSL));
+	FLinearColor skinColor = UGTBFL::HSLtoRGB(CharacterData->SkinColorHSL);
+	BodyDMI->SetVectorParameterValue(TEXT("ColorSkin"), skinColor);
 	UColorQuartetBFL::SetColorQuartetParameter(BodyDMI, UColorQuartetBFL::HSLtoRGBQuartet(CharacterData->BodyColorsHSL));
+
+	HandDMI = HandSprite->CreateDynamicMaterialInstance(0);
+	if (CharacterData->BodyAsset->HandColor == 4)
+		HandDMI->SetVectorParameterValue(TEXT("Color"), skinColor);
+	else
+		HandDMI->SetVectorParameterValue(TEXT("Color"), UGTBFL::HSLtoRGB(UColorQuartetBFL::GetQuartetMember(CharacterData->BodyColorsHSL, CharacterData->BodyAsset->HandColor)));
 
 	HairDMI = HairSprite->CreateDynamicMaterialInstance(0);
 	if (CharacterData->HairIndex == 255) //bald
@@ -57,8 +68,8 @@ void AGTCharacter::InitMaterials()
 	else
 	{
 		//HairDMI->SetTextureParameterValue(TEXT("Texture"), );
-		HairDMI->SetScalarParameterValue(TEXT("Column"), CharacterData->HairIndex % 5);
-		HairDMI->SetScalarParameterValue(TEXT("Row"), CharacterData->HairIndex / 5);
+		HairDMI->SetScalarParameterValue(TEXT("Column"), CharacterData->HairIndex / 5);
+		HairDMI->SetScalarParameterValue(TEXT("Row"), CharacterData->HairIndex % 5);
 		HairDMI->SetVectorParameterValue(TEXT("Color"), UGTBFL::HSLtoRGB(CharacterData->HairColorHSL));
 	}
 
@@ -73,10 +84,10 @@ void AGTCharacter::InitMaterials()
 	{
 		HatFrontDMI->SetTextureParameterValue(TEXT("Texture"), CharacterData->HatAsset->Image);
 		HatBackDMI->SetTextureParameterValue(TEXT("Texture"), CharacterData->HatAsset->ImageB);
-		HatFrontDMI->SetScalarParameterValue(TEXT("Column"), CharacterData->HatIndex % 5);
-		HatFrontDMI->SetScalarParameterValue(TEXT("Row"), CharacterData->HatIndex / 5);
-		HatBackDMI->SetScalarParameterValue(TEXT("Column"), CharacterData->HatIndex % 5);
-		HatBackDMI->SetScalarParameterValue(TEXT("Row"), CharacterData->HatIndex / 5);
+		HatFrontDMI->SetScalarParameterValue(TEXT("Column"), CharacterData->HatIndex / 5);
+		HatFrontDMI->SetScalarParameterValue(TEXT("Row"), CharacterData->HatIndex % 5);
+		HatBackDMI->SetScalarParameterValue(TEXT("Column"), CharacterData->HatIndex / 5);
+		HatBackDMI->SetScalarParameterValue(TEXT("Row"), CharacterData->HatIndex % 5);
 		FColorQuartet hatColorsRGB = UColorQuartetBFL::HSLtoRGBQuartet(CharacterData->HatColorsHSL);
 		UColorQuartetBFL::SetColorQuartetParameter(HatFrontDMI, hatColorsRGB);
 		UColorQuartetBFL::SetColorQuartetParameter(HatBackDMI, hatColorsRGB);
@@ -88,45 +99,31 @@ void AGTCharacter::InitMaterials()
 void AGTCharacter::FrontBackFlip()
 {
 	float diff = FMath::Fmod((GetActorRotation().Yaw - UGameplayStatics::GetPlayerCameraManager(this, 0)->GetCameraRotation().Yaw + 360.0f), 360.0f);
-	float bodyFB, headFB, headFlip, weaponFlip;
+	float bodyFB, headFB, headFlip;
 	FName headSocket, shieldSocket, weaponSocket;
-	/*if (diff < 90) {
-		bodyFB = 3; headFB = 1; headFlip = -1; weaponFlip = 1;
-		headSocket = FName(TEXT("Head_3")); shieldSocket = FName(TEXT("Shield_3")); weaponSocket = FName(TEXT("Weapon_3"));
-	}
-	else if (diff < 180) {
-		bodyFB = 0; headFB = 0; headFlip = 1; weaponFlip = 1;
-		headSocket = FName(TEXT("Head_0")); shieldSocket = FName(TEXT("Shield_0")); weaponSocket = FName(TEXT("Weapon_0"));
-	}
-	else if (diff < 270) {
-		bodyFB = 1; headFB = 0; headFlip = -1; weaponFlip = -1;
-		headSocket = FName(TEXT("Head_1")); shieldSocket = FName(TEXT("Shield_1")); weaponSocket = FName(TEXT("Weapon_1"));
-	}
-	else {
-		bodyFB = 2; headFB = 1; headFlip = 1; weaponFlip = -1;
-		headSocket = FName(TEXT("Head_2")); shieldSocket = FName(TEXT("Shield_2")); weaponSocket = FName(TEXT("Weapon_2"));
-	}*/
 	if (diff < 90) {
-		bodyFB = 2; headFB = 1; headFlip = 1; weaponFlip = -1;
+		bodyFB = 2; headFB = 1; headFlip = 1;
 		headSocket = FName(TEXT("Head_2")); shieldSocket = FName(TEXT("Shield_2")); weaponSocket = FName(TEXT("Weapon_2"));
 	}
 	else if (diff < 180) {
-		bodyFB = 1; headFB = 0; headFlip = -1; weaponFlip = -1;
+		bodyFB = 1; headFB = 0; headFlip = -1;
 		headSocket = FName(TEXT("Head_1")); shieldSocket = FName(TEXT("Shield_1")); weaponSocket = FName(TEXT("Weapon_1"));
 	}
 	else if (diff < 270) {
-		bodyFB = 0; headFB = 0; headFlip = 1; weaponFlip = 1;
+		bodyFB = 0; headFB = 0; headFlip = 1;
 		headSocket = FName(TEXT("Head_0")); shieldSocket = FName(TEXT("Shield_0")); weaponSocket = FName(TEXT("Weapon_0"));
 	}
 	else {
-		bodyFB = 3; headFB = 1; headFlip = -1; weaponFlip = 1;
+		bodyFB = 3; headFB = 1; headFlip = -1;
 		headSocket = FName(TEXT("Head_3")); shieldSocket = FName(TEXT("Shield_3")); weaponSocket = FName(TEXT("Weapon_3"));
 	}
 
 	BodyDMI->SetScalarParameterValue(TEXT("FrontBack"), bodyFB);
+	HandDMI->SetScalarParameterValue(TEXT("FrontBack"), bodyFB);
 	HairDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
 	HatFrontDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
 	HatBackDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
+
 	FAttachmentTransformRules atr = FAttachmentTransformRules(EAttachmentRule::KeepRelative, true);
 	HairSprite->AttachToComponent(GetSprite(), atr, headSocket);
 	HatFrontSprite->AttachToComponent(GetSprite(), atr, headSocket);
@@ -138,9 +135,6 @@ void AGTCharacter::FrontBackFlip()
 	HairSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
 	HatFrontSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
 	HatBackSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
-
-	WeaponSprite->SetRelativeScale3D(FVector(weaponFlip, 1, 1));
-	ShieldSprite->SetRelativeScale3D(FVector(weaponFlip, 1, 1));
 }
 
 void AGTCharacter::BeginPlay()
@@ -174,6 +168,23 @@ void AGTCharacter::BeginPlay()
 	bIsMyTurn = false;
 
 	Super::BeginPlay();
+
+	if (GetAnimInstance())
+	{
+		if (GetAnimInstance()->GetPlayer())
+		{
+			GetAnimInstance()->GetPlayer()->OnPlaybackSequenceChanged.AddDynamic(this, &AGTCharacter::OnAnimSequenceUpdated);
+			UE_LOG(LogTemp, Log, TEXT("got anim player for %s"), *GetName());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("could not get anim player for %s"), *GetName());
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("could not get anim instance for %s"), *GetName());
+	}
 }
 
 void AGTCharacter::BeginTurn_Implementation()
@@ -595,6 +606,12 @@ const FNodeData* AGTCharacter::FindMoveData(FVector vec) const
 	}
 
 	return nullptr;
+}
+
+void AGTCharacter::OnAnimSequenceUpdated(const UPaperZDAnimSequence* From, const UPaperZDAnimSequence* To, float CurrentProgress)
+{
+	HandSprite->SetFlipbook(To->GetAnimationData<UPaperFlipbook*>());
+	HandSprite->SetPlaybackPosition(CurrentProgress, false);
 }
 
 void AGTCharacter::Tick(float DeltaTime)

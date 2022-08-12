@@ -24,6 +24,10 @@ public:
 	//how many DefaultColors are TeamColors (hue comes from team instead of asset)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		uint8 TeamColors = 1;
+
+	//for HandSprite, which color is used for the hand. 4 = skin color
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		uint8 HandColor = 4;
 };
 
 /**
