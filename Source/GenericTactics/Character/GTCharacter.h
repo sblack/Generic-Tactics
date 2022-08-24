@@ -3,7 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PaperZDCharacter.h"
+#include "GameFramework/Pawn.h"
+//#include "PaperZDCharacter.h"
 #include "../Combat/CombatManager.h"
 #include "../Movement/NavGrid.h"
 #include "../Utility/GTBFL.h"
@@ -22,14 +23,36 @@ struct FMovementStep
 	FVector CalcPosition(float time);
 };
 
+UENUM()
+enum class ESpriteNames : uint8
+{
+	Idle,
+	Attack,
+	Point,
+	Raise,
+	Struck,
+	Down,
+	Num UMETA(Hidden)
+};
+
 /**
  * 
  */
 UCLASS(ABSTRACT)
-class GENERICTACTICS_API AGTCharacter : public APaperZDCharacter, public ITargetableInterface
+class GENERICTACTICS_API AGTCharacter : public APawn, public ITargetableInterface
 {
 	GENERATED_BODY()
+
+//COMPONENTS AND PAWN
 private:
+	/** The CapsuleComponent being used for movement collision (by CharacterMovement). Always treated as being vertically aligned in simple collision check functions. */
+	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		UCapsuleComponent* CapsuleComponent;
+
+	/** reference to the body sprite component in child class */
+	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		class UPaperSpriteComponent* BodySprite;
+
 	/** reference to the hair sprite component in child class */
 	class UPaperSpriteComponent* HairSprite;
 
@@ -46,28 +69,56 @@ private:
 	class UPaperSpriteComponent* WeaponSprite;
 
 	/** reference to the hand sprite component in child class */
-	class UPaperFlipbookComponent* HandSprite;
+	class UPaperSpriteComponent* HandSprite;
 
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+public:
+	/** Returns CapsuleComponent subobject **/
+	FORCEINLINE class UCapsuleComponent* GetCapsuleComponent() const { return CapsuleComponent; }
+
+	UFUNCTION(BlueprintPure, Category = "Character")
+		FORCEINLINE class AGTAIController* GetTacticsAI();
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	//	class UCharacterStatsComponent* Stats;
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	//	class UCharacterEquipmentComponent* Equipment;
+
+	// Sets default values for this character's properties
+	AGTCharacter(const FObjectInitializer& ObjectInitializer);
+
+	virtual void PostInitializeComponents() override;
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION(BlueprintCallable)
+	void SetSprite(class UPaperSprite* sprite);
+
+
+
+//COSMETIC AND DATA
+private:
 	/** scale of sprite when first spawned; used for flipping left-right */
 	FVector OriginalScale;
 
-	float MoveTimePassed = 0;
-	TArray<FMovementStep> MoveSteps;
-
 	void InitMaterials();
 
+	/** the component attachments seem to bug out if attaching to the socket they already occupy; so detach. SHOULD BE IMMEDIATELY FOLLOWED BY UpdateFacing(). */
 	UFUNCTION(BlueprintCallable)
-	void FrontBackFlip();
+		void ResetAttachments();
 
-	void FinishedMoving();
-
-	const FNodeData* FindMoveData(FVector vec) const;
-
-	UFUNCTION()
-	void OnAnimSequenceUpdated(const class UPaperZDAnimSequence* From, const class UPaperZDAnimSequence* To, float CurrentProgress);
+	UFUNCTION(BlueprintCallable)
+		void UpdateFacing();
 
 protected:
-
 	UPROPERTY(BlueprintReadOnly)
 		class UMaterialInstanceDynamic* BodyDMI;
 
@@ -83,8 +134,55 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 		class UMaterialInstanceDynamic* HandDMI;
 
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+public:
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, meta = (ExposeOnSpawn))
+		class UCharacterDataAsset* CharacterData;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+		FText CharacterName;
+
+	virtual FText GetTargetName() const override { return CharacterName; }
+
+
+
+//MOVEMENT
+private:
+	float MoveTimePassed = 0;
+	TArray<FMovementStep> MoveSteps;
+
+	void FinishedMoving();
+
+	const FNodeData* FindMoveData(FVector vec) const;
+
+public:
+	/** is moving */
+	UPROPERTY(BlueprintReadOnly)
+		bool bIsMoving = false;
+
+	TArray< TArray<FNodeData>> MoveGrid;
+	int MoveDataID;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		bool GetPathTo(FVector destination, FNavPath& path);
+
+	void StartMoving(FNavPath path);
+
+	UFUNCTION(BlueprintPure, Category = "Tactics")
+		TArray<FNodeData> GetReachableArea();
+
+	/** @param target Target location
+	 @param range Desired distance from target */
+	UFUNCTION(BlueprintPure, Category = "Tactics")
+		FNodeData NearestReachableLocationToTarget(FVector target, float range);
+
+
+
+
+
+private:
+
+
+protected:
 
 	void BeginTurn_Implementation();
 
@@ -92,39 +190,21 @@ protected:
 
 public:
 
+	//separate from other sprites to make a walk cycle
+	UPROPERTY(EditDefaultsOnly)
+	TArray<class UPaperSprite*> SpritesWalk;
+
+	UPROPERTY(EditDefaultsOnly, meta = (ArraySizeEnum = "ESpriteNames"))
+	class UPaperSprite* Sprites[ESpriteNames::Num];
+
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced)
 		class UActionAttack* DefaultMeleeAttack;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced)
 		class UActionAttack* DefaultRangedAttack;
 
-	/** flip sprite left-right */
-	UPROPERTY(BlueprintReadOnly)
-		bool bMirrored;
-
-	/** front or back version of sprite */
-	UPROPERTY(BlueprintReadOnly)
-		bool bFrontView;
-
-	/** is moving */
-	UPROPERTY(BlueprintReadOnly)
-		bool bIsMoving = false;
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, meta = (ExposeOnSpawn))
-		class UCharacterDataAsset* CharacterData;
-
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	//	class UCharacterStatsComponent* Stats;
-
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	//	class UCharacterEquipmentComponent* Equipment;
-
-	/** Use full guard idle instead of half guard*/
-	UFUNCTION(BlueprintPure)
-		bool UseFullGuard();
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-		FText CharacterName;
+	
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		float CurrentAP;
@@ -153,34 +233,11 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		bool bIsMyTurn;
 
-	TArray< TArray<FNodeData>> MoveGrid;
-	int MoveDataID;
-
-	// Sets default values for this character's properties
-	AGTCharacter(const FObjectInitializer& ObjectInitializer);
-
-	virtual void PostInitializeComponents() override;
-
-//#if WITH_EDITOR
-//	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-//#endif
-
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 		void BeginTurn();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 		void EndTurn();
-
-	UFUNCTION(BlueprintPure, Category = "Character")
-		FORCEINLINE class AGTAIController* GetTacticsAI();
-
-	virtual FText GetTargetName() const override { return CharacterName; }
 
 	virtual int32 GetCurrentHealth() const override;
 
@@ -214,19 +271,6 @@ public:
 	virtual void OnHoverStart() override;
 
 	virtual void OnHoverEnd() override;
-
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-		bool GetPathTo(FVector destination, FNavPath& path);
-
-	void StartMoving(FNavPath path);
-
-	UFUNCTION(BlueprintPure, Category = "Tactics")
-		TArray<FNodeData> GetReachableArea();
-
-	/** @param target Target location 
-	 @param range Desired distance from target */
-	UFUNCTION(BlueprintPure, Category = "Tactics")
-		FNodeData NearestReachableLocationToTarget(FVector target, float range);
 
 	bool IsSameTeam(ITargetable target);
 

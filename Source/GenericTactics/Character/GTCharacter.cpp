@@ -10,6 +10,7 @@
 #include "../Player/GTPlayerController.h"
 #include "../UI/GTHUDCode.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "PaperFlipbookComponent.h"
 #include "PaperSpriteComponent.h"
@@ -19,17 +20,39 @@
 #include "AnimSequences\PaperZDAnimSequence.h"
 #include "AnimSequences\Players\PaperZDAnimPlayer.h"
 
-
-bool AGTCharacter::UseFullGuard()
-{
-	return (CharacterData->Shield != nullptr);
-}
-
 AGTCharacter::AGTCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollisionCylinder"));
+	CapsuleComponent->InitCapsuleSize(34.0f, 88.0f);
+	CapsuleComponent->SetCollisionProfileName(UCollisionProfile::Pawn_ProfileName);
+
+	CapsuleComponent->CanCharacterStepUpOn = ECB_No;
+	CapsuleComponent->SetShouldUpdatePhysicsVolume(true);
+	CapsuleComponent->SetCanEverAffectNavigation(false);
+	CapsuleComponent->bDynamicObstacle = true;
+	RootComponent = CapsuleComponent;
+
+	// Try to create the sprite component
+	BodySprite = CreateOptionalDefaultSubobject<UPaperSpriteComponent>(TEXT("Body"));
+	if (BodySprite)
+	{
+		BodySprite->AlwaysLoadOnClient = true;
+		BodySprite->AlwaysLoadOnServer = true;
+		BodySprite->bOwnerNoSee = false;
+		BodySprite->bAffectDynamicIndirectLighting = true;
+		BodySprite->PrimaryComponentTick.TickGroup = TG_PrePhysics;
+		BodySprite->SetupAttachment(CapsuleComponent);
+		static FName CollisionProfileName(TEXT("CharacterMesh"));
+		BodySprite->SetCollisionProfileName(CollisionProfileName);
+		BodySprite->SetGenerateOverlapEvents(false);
+	}
+
+	//the other sprite components must be added entirely in BP, because the attachment socket doesn't exist without a sprite (so not possible here)
+	// and can't be changed in inherited components (so not in BP)
 
 	//Stats = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("Stats"));
 	//Equipment = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("Equipment"));
@@ -45,12 +68,12 @@ void AGTCharacter::PostInitializeComponents()
 	HatBackSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("HatB")));
 	ShieldSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Shield")));
 	WeaponSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Weapon")));
-	HandSprite = Cast<UPaperFlipbookComponent>(GetDefaultSubobjectByName(TEXT("Hand")));
+	HandSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Hand")));
 }
 
 void AGTCharacter::InitMaterials()
 {
-	BodyDMI = GetSprite()->CreateDynamicMaterialInstance(0);
+	BodyDMI = BodySprite->CreateDynamicMaterialInstance(0);
 	BodyDMI->SetTextureParameterValue(TEXT("Texture"), CharacterData->BodyAsset->Image);
 	FLinearColor skinColor = UGTBFL::HSLtoRGB(CharacterData->SkinColorHSL);
 	BodyDMI->SetVectorParameterValue(TEXT("ColorSkin"), skinColor);
@@ -93,10 +116,21 @@ void AGTCharacter::InitMaterials()
 		UColorQuartetBFL::SetColorQuartetParameter(HatBackDMI, hatColorsRGB);
 	}
 
-	OriginalScale = GetSprite()->GetRelativeScale3D();
+	OriginalScale = BodySprite->GetRelativeScale3D();
 }
 
-void AGTCharacter::FrontBackFlip()
+void AGTCharacter::ResetAttachments()
+{
+	FAttachmentTransformRules atr = FAttachmentTransformRules(EAttachmentRule::KeepRelative, true);
+	HairSprite->AttachToComponent(BodySprite, atr);
+	HatFrontSprite->AttachToComponent(BodySprite, atr);
+	HatBackSprite->AttachToComponent(BodySprite, atr);
+
+	WeaponSprite->AttachToComponent(BodySprite, atr);
+	ShieldSprite->AttachToComponent(BodySprite, atr);
+}
+
+void AGTCharacter::UpdateFacing()
 {
 	float diff = FMath::Fmod((GetActorRotation().Yaw - UGameplayStatics::GetPlayerCameraManager(this, 0)->GetCameraRotation().Yaw + 360.0f), 360.0f);
 	float bodyFB, headFB, headFlip;
@@ -125,12 +159,12 @@ void AGTCharacter::FrontBackFlip()
 	HatBackDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
 
 	FAttachmentTransformRules atr = FAttachmentTransformRules(EAttachmentRule::KeepRelative, true);
-	HairSprite->AttachToComponent(GetSprite(), atr, headSocket);
-	HatFrontSprite->AttachToComponent(GetSprite(), atr, headSocket);
-	HatBackSprite->AttachToComponent(GetSprite(), atr, headSocket);
+	HairSprite->AttachToComponent(BodySprite, atr, headSocket);
+	HatFrontSprite->AttachToComponent(BodySprite, atr, headSocket);
+	HatBackSprite->AttachToComponent(BodySprite, atr, headSocket);
 
-	WeaponSprite->AttachToComponent(GetSprite(), atr, weaponSocket);
-	ShieldSprite->AttachToComponent(GetSprite(), atr, shieldSocket);
+	WeaponSprite->AttachToComponent(BodySprite, atr, weaponSocket);
+	ShieldSprite->AttachToComponent(BodySprite, atr, shieldSocket);
 
 	HairSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
 	HatFrontSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
@@ -161,30 +195,13 @@ void AGTCharacter::BeginPlay()
 
 	CharacterName = CharacterData->Name;
 	InitMaterials();
-	FrontBackFlip();
+	UpdateFacing();
 
 	Initiative = RollInitiative();
 	MoveDataID = -1;
 	bIsMyTurn = false;
 
 	Super::BeginPlay();
-
-	if (GetAnimInstance())
-	{
-		if (GetAnimInstance()->GetPlayer())
-		{
-			GetAnimInstance()->GetPlayer()->OnPlaybackSequenceChanged.AddDynamic(this, &AGTCharacter::OnAnimSequenceUpdated);
-			UE_LOG(LogTemp, Log, TEXT("got anim player for %s"), *GetName());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("could not get anim player for %s"), *GetName());
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("could not get anim instance for %s"), *GetName());
-	}
 }
 
 void AGTCharacter::BeginTurn_Implementation()
@@ -276,6 +293,12 @@ void AGTCharacter::EndTurn_Implementation()
 void AGTCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void AGTCharacter::SetSprite(class UPaperSprite* sprite)
+{
+	BodySprite->SetSprite(sprite);
+	HandSprite->SetSprite(sprite);
 }
 
 FORCEINLINE class AGTAIController* AGTCharacter::GetTacticsAI()
@@ -389,12 +412,12 @@ void AGTCharacter::OnHit(bool bMajor)
 
 void AGTCharacter::OnHoverStart()
 {
-	GetSprite()->SetSpriteColor(FLinearColor(.5f, .5f, 0));
+	BodySprite->SetSpriteColor(FLinearColor(.5f, .5f, 0));
 }
 
 void AGTCharacter::OnHoverEnd()
 {
-	GetSprite()->SetSpriteColor(FLinearColor(0, 0, 0));
+	BodySprite->SetSpriteColor(FLinearColor(0, 0, 0));
 }
 
 bool AGTCharacter::GetPathTo(FVector destination, FNavPath& path)
@@ -452,6 +475,8 @@ void AGTCharacter::StartMoving(FNavPath path)
 	SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
 	ANavGrid::RemoveActorFromGrid(this);
 	ACameraPawn::Instance->AttachCamera(this);
+
+	SetSprite(SpritesWalk[MoveSteps.Num() % SpritesWalk.Num()]);
 }
 
 TArray<FNodeData> AGTCharacter::GetReachableArea()
@@ -569,6 +594,9 @@ void AGTCharacter::FinishedMoving()
 		return;
 	}
 
+	SetSprite(Sprites[(uint8)ESpriteNames::Idle]);
+	ResetAttachments();
+	UpdateFacing();
 	SetActorLocation(ANavGrid::Instance->AlignToGrid(GetActorLocation()));
 	ANavGrid::AddActorToGrid(this);
 	ANavGrid::MoveDataID++;
@@ -608,12 +636,6 @@ const FNodeData* AGTCharacter::FindMoveData(FVector vec) const
 	return nullptr;
 }
 
-void AGTCharacter::OnAnimSequenceUpdated(const UPaperZDAnimSequence* From, const UPaperZDAnimSequence* To, float CurrentProgress)
-{
-	HandSprite->SetFlipbook(To->GetAnimationData<UPaperFlipbook*>());
-	HandSprite->SetPlaybackPosition(CurrentProgress, false);
-}
-
 void AGTCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -643,19 +665,13 @@ void AGTCharacter::Tick(float DeltaTime)
 				MoveTimePassed -= MoveSteps[0].TimeToArrival;
 				MoveSteps.RemoveAt(0);
 				SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
+				SetSprite(SpritesWalk[MoveSteps.Num() % SpritesWalk.Num()]);
 			}
 
 			SetActorLocation(MoveSteps[0].CalcPosition(MoveTimePassed));
 		}
 	}
 }
-
-//#if WITH_EDITOR
-//void AGTCharacter::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-//{
-//	Super::PostEditChangeProperty(PropertyChangedEvent);
-//}
-//#endif
 
 #define GRAV .0098f
 
