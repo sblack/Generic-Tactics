@@ -35,13 +35,13 @@ EActionUsable UAction::CanUseTarget(class AGTCharacter* user, FVector target)
 	return EActionUsable::Usable;
 }
 
-void UAction::Perform(class AGTCharacter* user, FVector target)
-{
-	if (!user) return;
-
-	user->SetActorRotation(((target - user->GetActorLocation()) * FVector(1, 1, 0)).ToOrientationRotator());
-	user->PlayActionAnim(Anim);
-}
+//void UAction::Perform(class AGTCharacter* user, FVector target)
+//{
+//	if (!user) return;
+//
+//	user->SetActorRotation(((target - user->GetActorLocation()) * FVector(1, 1, 0)).ToOrientationRotator());
+//	user->PlayActionAnim(Anim);
+//}
 
 void UAction::Resolve(class AGTCharacter* user, FVector target)
 {

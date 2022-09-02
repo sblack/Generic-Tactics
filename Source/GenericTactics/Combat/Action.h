@@ -42,12 +42,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		EActionAnim Anim;
 
+	/** timing and location determined by key */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		TMap<FName, class UParticleSystem*> Particles;
+
+	/** timing and location determined by key */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		TMap<FName, class USoundBase*> Sounds;
+
 	UAction();
 
 	UFUNCTION(BlueprintPure, Category = "Action")
 		virtual EActionUsable CanUseTarget(class AGTCharacter* user, FVector target);
 	
-	virtual void Perform(class AGTCharacter* user, FVector target);
+	//virtual void Perform(class AGTCharacter* user, FVector target);
 
 	virtual void Resolve(class AGTCharacter* user, FVector target);
 

@@ -79,7 +79,6 @@ void AGTPlayerController::ControlCharacter(class AGTCharacter* chara)
 void AGTPlayerController::MoveCompleted()
 {
 	UE_LOG(LogGTPlayerController, Log, TEXT("MoveCompleted"));
-	bMoving = false;
 	CancelTarget();
 }
 
@@ -97,7 +96,7 @@ FString AGTPlayerController::GetHoverText()
 
 void AGTPlayerController::BeginTargetMove()
 {
-	bTargetMove = true;
+	PCState = EPCState::TargetMove;
 	SelectedLocation = FVector(0, 0, -1000);
 	ANavGrid::Instance->ShowMoveRange(ActiveCharacter);
 }
@@ -109,7 +108,7 @@ void AGTPlayerController::BeginTargetAction(class UAction* action)
 		UE_LOG(LogGTPlayerController, Error, TEXT("BeginTargetAction requires an Action"));
 		return;
 	}
-	bTargetAction = true;
+	PCState = EPCState::TargetAction;
 	SelectedLocation = FVector(0, 0, -1000);
 	SelectedAction = action;
 	ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, SelectedLocation, SelectedAction);
@@ -117,7 +116,7 @@ void AGTPlayerController::BeginTargetAction(class UAction* action)
 
 void AGTPlayerController::CancelTarget()
 {
-	bTargetAction = bTargetMove = false;
+	PCState = EPCState::Idle;
 	ANavGrid::Instance->ShowMoveRange(nullptr);
 	UGTHUDCode::Instance->RestoreCommandMenu();
 }
@@ -195,18 +194,15 @@ void AGTPlayerController::OnLeftClickUp()
 	UE_LOG(LogGTPlayerController, Log, TEXT("OnLeftClickUp"));
 
 	if (UCombatManager::IsPreCombat())
+	{
 		OnLeftClickUpPre();
+	}
 	else
 	{
-		if (bMoving || !ActiveCharacter || UCombatManager::IsPerformingActions())
+		if (!ActiveCharacter || PCState == EPCState::Active)
 			return;
 		OnLeftClickUpCombat();
-		return;
 	}
-	if (bMoving || !ActiveCharacter)
-		return;
-	OnLeftClickUpCombat();
-
 }
 
 void AGTPlayerController::OnLeftClickUpPre()
@@ -234,14 +230,14 @@ void AGTPlayerController::OnLeftClickUpPre()
 void AGTPlayerController::OnLeftClickUpCombat()
 {
 	UE_LOG(LogGTPlayerController, Log, TEXT("OnLeftClickUpCombat"));
-	if (bTargetMove)
+	if (PCState == EPCState::TargetMove)
 	{
 		UE_LOG(LogGTPlayerController, Log, TEXT("   TargetMove"));
 		if (HoverLocation == SelectedLocation) //confirm move
 		{
 			if (bHavePath)// && NavPathCost <= ActiveCharacter->CurrentAP)
 			{
-				bMoving = true;
+				PCState = EPCState::Active;
 				ANavGrid::Instance->ShowMoveRange(nullptr);
 				ActiveCharacter->StartMoving(NavPath);
 				UGTHUDCode::Instance->HideCommands();
@@ -267,17 +263,33 @@ void AGTPlayerController::OnLeftClickUpCombat()
 			}
 		}
 	}
-	else if (bTargetAction)
+	else if (PCState == EPCState::TargetAction)
 	{
 		UE_LOG(LogGTPlayerController, Log, TEXT("   TargetAction"));
 		if (HoverLocation == SelectedLocation)
 		{
 			//UCombatManager::InitiatePreparedAction(ActiveCharacter);
-
+			if (ANavGrid::Instance->GetWithinDistance(ActiveCharacter->GetActorLocation(), SelectedAction->Range).Contains(HoverLocation))
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Cyan, FString::Printf(TEXT("VALID TARGET")));
+				FActionData data;
+				data.Action = SelectedAction;
+				data.Actor = ActiveCharacter;
+				data.Location = SelectedLocation;
+				ActiveCharacter->PerformAction(data);
+				PCState = EPCState::Active;
+				ANavGrid::Instance->ShowMoveRange(nullptr);
+				UGTHUDCode::Instance->HideCommands();
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, FString::Printf(TEXT("INVALID TARGET")));
+			}
 		}
 		else
 		{
 			SelectedLocation = HoverLocation;
+			ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, SelectedLocation, SelectedAction);
 		}
 	}
 }
@@ -285,6 +297,14 @@ void AGTPlayerController::OnLeftClickUpCombat()
 void AGTPlayerController::MouseOverTerrain(FVector location)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Red, FString::Printf(TEXT("MouseOverTerrain %s"), *location.ToString()));
+
+	if(UGTHUDCode::Instance)
+	{
+		if (HoverTarget)
+			UGTHUDCode::Instance->UpdateDebugText(FString::Printf(TEXT("HoverTarget %s\nHoverLocation %s"), *HoverTarget->GetTargetName().ToString(), *HoverLocation.ToString()));
+		else
+			UGTHUDCode::Instance->UpdateDebugText(FString::Printf(TEXT("HoverTarget NULL\nHoverLocation %s"), *HoverLocation.ToString()));
+	}
 	//location = ANavGrid::Instance->AlignToGrid(location);
 	location = ANavGrid::Instance->GetGridLocation(location);
 	GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Red, FString::Printf(TEXT("%s vs %s"), *location.ToString(), *HoverLocation.ToString()));
@@ -350,11 +370,10 @@ void AGTPlayerController::MouseOverTerrain(FVector location)
 				GEngine->AddOnScreenDebugMessage(3, 0.1f, FColor::Red, FString::Printf(TEXT("Selected Z != -1000")));
 			}
 
-			if (ActiveCharacter && !bMoving && SelectedLocation.Z == -1000)
+			if (ActiveCharacter && SelectedLocation.Z == -1000)
 			{
-				if (bTargetMove)
+				if (PCState == EPCState::TargetMove)
 				{
-
 					NavPath.Empty();
 					if (ActiveCharacter->GetPathTo(HoverLocation, NavPath))
 					{
@@ -370,7 +389,7 @@ void AGTPlayerController::MouseOverTerrain(FVector location)
 						//UE_LOG(LogGTPlayerController, Log, TEXT("MOT: No Path"));
 					}
 				}
-				else if (bTargetAction)
+				else if (PCState == EPCState::TargetAction)
 				{
 					//UCombatManager::UpdateAreaOfEffect(ActiveCharacter->GetActorLocation(), HoverLocation);
 					ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, HoverLocation, SelectedAction);
@@ -382,6 +401,9 @@ void AGTPlayerController::MouseOverTerrain(FVector location)
 
 void AGTPlayerController::MouseOverTarget(ITargetable target)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Red, FString::Printf(TEXT("MouseOverTarget %s"), *target->GetTargetName().ToString()));
+	if (UGTHUDCode::Instance)
+		UGTHUDCode::Instance->UpdateDebugText(FString::Printf(TEXT("HoverTarget %s\nHoverLocation %s"), *target->GetTargetName().ToString(), *HoverLocation.ToString()));
 	if (target == HoverTarget)
 		return;
 
@@ -393,7 +415,7 @@ void AGTPlayerController::MouseOverTarget(ITargetable target)
 	UGTHUDCode::Instance->ShowTargetInfo(target);
 	FVector location = target->AsActor()->GetActorLocation();
 
-	HoverLocation = ANavGrid::Instance->AlignToGrid(location);
+	HoverLocation = ANavGrid::Instance->GetGridLocation(location);
 
 	if (UCombatManager::IsPreCombat())
 	{
@@ -401,13 +423,10 @@ void AGTPlayerController::MouseOverTarget(ITargetable target)
 	}
 	else
 	{
-		if (ActiveCharacter && !bMoving && SelectedLocation.Z == -1000)
+		if (ActiveCharacter && PCState == EPCState::TargetAction && SelectedLocation.Z == -1000)
 		{
-			if (bTargetAction)
-			{
-				//UCombatManager::UpdateAreaOfEffect(ActiveCharacter->GetActorLocation(), HoverLocation);
-				ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, HoverLocation, SelectedAction);
-			}
+			//UCombatManager::UpdateAreaOfEffect(ActiveCharacter->GetActorLocation(), HoverLocation);
+			ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, HoverLocation, SelectedAction);
 		}
 	}
 

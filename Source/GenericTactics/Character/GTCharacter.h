@@ -29,6 +29,35 @@ UCLASS(ABSTRACT)
 class GENERICTACTICS_API AGTCharacter : public APaperZDCharacter, public ITargetableInterface
 {
 	GENERATED_BODY()
+//INHERITED
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+public:
+	UFUNCTION(BlueprintPure, Category = "Character")
+		FORCEINLINE class AGTAIController* GetTacticsAI();
+
+	// Sets default values for this character's properties
+	AGTCharacter(const FObjectInitializer& ObjectInitializer);
+
+	virtual void PostInitializeComponents() override;
+
+	//#if WITH_EDITOR
+	//	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	//#endif
+
+		// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	//virtual void PostLoad() override;
+
+
+
+//SPRITES AND COSMETIC
 private:
 	/** reference to the hair sprite component in child class */
 	class UPaperSpriteComponent* HairSprite;
@@ -48,26 +77,32 @@ private:
 	/** reference to the hand sprite component in child class */
 	class UPaperFlipbookComponent* HandSprite;
 
+	FName HeadSocketName;
+	FName WeaponSocketName;
+	FName ShieldSocketName;
+
 	/** scale of sprite when first spawned; used for flipping left-right */
 	FVector OriginalScale;
 
-	float MoveTimePassed = 0;
-	TArray<FMovementStep> MoveSteps;
+	UPROPERTY(EditDefaultsOnly)
+		class UPaperFlipbook* FBIdle;
+
+	UPROPERTY(EditDefaultsOnly)
+		class UPaperFlipbook* FBWalk;
 
 	void InitMaterials();
 
+	/** the component attachments seem to bug out if attaching to the socket they already occupy; so detach, then reattach */
 	UFUNCTION(BlueprintCallable)
-	void FrontBackFlip();
+		void ResetAttachments();
 
-	void FinishedMoving();
-
-	const FNodeData* FindMoveData(FVector vec) const;
+	UFUNCTION(BlueprintCallable)
+		void UpdateFacing();
 
 	UFUNCTION()
-	void OnAnimSequenceUpdated(const class UPaperZDAnimSequence* From, const class UPaperZDAnimSequence* To, float CurrentProgress);
+		void OnAnimSequenceUpdated(const class UPaperZDAnimSequence* From, const class UPaperZDAnimSequence* To, float CurrentProgress);
 
 protected:
-
 	UPROPERTY(BlueprintReadOnly)
 		class UMaterialInstanceDynamic* BodyDMI;
 
@@ -83,8 +118,72 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 		class UMaterialInstanceDynamic* HandDMI;
 
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+
+
+//MOVEMENT
+private:
+	float MoveTimePassed = 0;
+	TArray<FMovementStep> MoveSteps;
+
+	void FinishedMoving();
+
+	const FNodeData* FindMoveData(FVector vec) const;
+
+public:
+	/** is moving */
+	UPROPERTY(BlueprintReadOnly)
+		bool bIsMoving = false;
+
+	TArray< TArray<FNodeData>> MoveGrid;
+	int MoveDataID;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		bool GetPathTo(FVector destination, FNavPath& path);
+
+	void StartMoving(FNavPath path);
+
+	UFUNCTION(BlueprintPure, Category = "Tactics")
+		TArray<FNodeData> GetReachableArea();
+
+	/** @param target Target location
+	 @param range Desired distance from target */
+	UFUNCTION(BlueprintPure, Category = "Tactics")
+		FNodeData NearestReachableLocationToTarget(FVector target, float range);
+
+
+
+	//ACTIONS
+private:
+	void StartAction();
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+	struct FActionData ActionInProgress;
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+		EActionAnim GetActionAnim();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		void PerformAction(FActionData actionData);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		void ResolveAction();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		void CompleteAction();
+
+	/*UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
+		void PlayActionAnim(EActionAnim anim);*/
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		void QueueAction(FNavPath path, FActionData actionData);
+
+
+
+
+
+protected:
+
 
 	void BeginTurn_Implementation();
 
@@ -98,17 +197,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced)
 		class UActionAttack* DefaultRangedAttack;
 
-	/** flip sprite left-right */
-	UPROPERTY(BlueprintReadOnly)
-		bool bMirrored;
-
-	/** front or back version of sprite */
-	UPROPERTY(BlueprintReadOnly)
-		bool bFrontView;
-
-	/** is moving */
-	UPROPERTY(BlueprintReadOnly)
-		bool bIsMoving = false;
+	
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, meta = (ExposeOnSpawn))
 		class UCharacterDataAsset* CharacterData;
@@ -118,10 +207,6 @@ public:
 
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	//	class UCharacterEquipmentComponent* Equipment;
-
-	/** Use full guard idle instead of half guard*/
-	UFUNCTION(BlueprintPure)
-		bool UseFullGuard();
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		FText CharacterName;
@@ -142,8 +227,6 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		bool bDead = false;
 
-	struct FActionData ActionInProgress;
-
 	//UFUNCTION(BlueprintPure, Category = "Combat")
 	//	EActionAnim GetActionAnim();
 
@@ -153,47 +236,17 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		bool bIsMyTurn;
 
-	TArray< TArray<FNodeData>> MoveGrid;
-	int MoveDataID;
-
-	// Sets default values for this character's properties
-	AGTCharacter(const FObjectInitializer& ObjectInitializer);
-
-	virtual void PostInitializeComponents() override;
-
-//#if WITH_EDITOR
-//	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-//#endif
-
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 		void BeginTurn();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 		void EndTurn();
 
-	UFUNCTION(BlueprintPure, Category = "Character")
-		FORCEINLINE class AGTAIController* GetTacticsAI();
-
 	virtual FText GetTargetName() const override { return CharacterName; }
 
 	virtual int32 GetCurrentHealth() const override;
 
 	virtual int32 GetMaxHealth() const override;
-
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-		void ResolveAction();
-
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-		void CompleteAction();
-
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
-		void PlayActionAnim(EActionAnim anim);
 
 	/*UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
 		void PlayHitAnim(bool bMajor);*/
@@ -215,26 +268,8 @@ public:
 
 	virtual void OnHoverEnd() override;
 
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-		bool GetPathTo(FVector destination, FNavPath& path);
-
-	void StartMoving(FNavPath path);
-
-	UFUNCTION(BlueprintPure, Category = "Tactics")
-		TArray<FNodeData> GetReachableArea();
-
-	/** @param target Target location 
-	 @param range Desired distance from target */
-	UFUNCTION(BlueprintPure, Category = "Tactics")
-		FNodeData NearestReachableLocationToTarget(FVector target, float range);
-
 	bool IsSameTeam(ITargetable target);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-		void QueueAction(FNavPath path, FActionData actionData);
-
-	UFUNCTION(BlueprintCallable, Category = "Combat")
 		TArray<class UActionAttack*> GetAllAttacks();
-
-	//virtual void PostLoad() override;
 };

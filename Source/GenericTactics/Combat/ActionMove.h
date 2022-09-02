@@ -17,7 +17,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, meta = (ExposeOnSpawn = true))
 		FVector Destination;
 
-	void Perform(class AGTCharacter* user, FVector direction) override;
+	//void Perform(class AGTCharacter* user, FVector direction) override;
 
 	//void Resolve(class AGTCharacter* user, FVector direction) override;
 

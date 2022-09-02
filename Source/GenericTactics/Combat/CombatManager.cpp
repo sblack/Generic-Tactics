@@ -27,7 +27,7 @@ void UCombatManager::AdvanceActionQueue()
 
 		if (action.Actor) //&& action.Actor is not dead
 		{
-			action.Action->Perform(action.Actor, action.Location);
+			//action.Action->Perform(action.Actor, action.Location);
 			return;
 		}
 	}
@@ -175,7 +175,7 @@ void UCombatManager::InitiateActionTarget(class UAction* action, class AGTCharac
 	}
 
 	Instance->bPerformingActions = true;
-	action->Perform(attacker, target->GetLocation() - attacker->GetActorLocation());
+	//action->Perform(attacker, target->GetLocation() - attacker->GetActorLocation());
 	UGTHUDCode::Instance->ShowAttackText(NSLOCTEXT("Combat", "UIAttack", "Attack"));
 }
 
@@ -197,7 +197,7 @@ void UCombatManager::InitiateActionLocation(class UAction* action, class AGTChar
 	//TODO: determine interrupts and reactions
 
 	Instance->bPerformingActions = true;
-	action->Perform(attacker, location - attacker->GetActorLocation());
+	//action->Perform(attacker, location - attacker->GetActorLocation());
 	UGTHUDCode::Instance->ShowAttackText(NSLOCTEXT("Combat", "UIAttack", "Attack"));
 }
 

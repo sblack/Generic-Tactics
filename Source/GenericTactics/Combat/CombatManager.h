@@ -58,6 +58,7 @@ protected:
 
 	//FTimerHandle InterruptHandle;
 
+	//DO I STILL NEED THIS?
 	void AdvanceActionQueue();
 
 public:
@@ -93,9 +94,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Combat")
 		static class UActionAttack* GetDefaultAttack() { return Instance->DefaultAttack; }
 
+	//DO I STILL NEED THIS?
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 		static void InitiateActionTarget(class UAction* action, class AGTCharacter* attacker, TScriptInterface<ITargetableInterface> target);
 
+		//DO I STILL NEED THIS?
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 		static void InitiateActionLocation(class UAction* action, class AGTCharacter* attacker, FVector location);
 

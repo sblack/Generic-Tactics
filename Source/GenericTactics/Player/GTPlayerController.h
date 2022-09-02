@@ -9,6 +9,15 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogGTPlayerController, Log, All);
 
+UENUM(BlueprintType)
+enum class EPCState : uint8
+{
+	Idle, //waiting on command
+	Active, //moving or acting
+	TargetMove, //planning move
+	TargetAction, //planning action
+};
+
 /**
  * 
  */
@@ -34,6 +43,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 		class AGTCharacter* ActiveCharacter;
+
+	UPROPERTY(BlueprintReadOnly)
+		EPCState PCState = EPCState::Idle;
 
 	class UAction* SelectedAction;
 
@@ -73,11 +85,8 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		float FinalAP;
 
-	UPROPERTY(BlueprintReadOnly)
-		bool bTargetMove = false;
-
-	UPROPERTY(BlueprintReadOnly)
-		bool bTargetAction = false;
+		UFUNCTION(BlueprintPure)
+		EPCState GetState() { return PCState; }
 
 	virtual void PlayerTick(float DeltaTime) override;
 

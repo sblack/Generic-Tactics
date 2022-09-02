@@ -14,15 +14,67 @@
 #include "PaperFlipbookComponent.h"
 #include "PaperSpriteComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Particles/ParticleSystem.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "TimerManager.h"
 #include "PaperZDAnimInstance.h"
 #include "AnimSequences\PaperZDAnimSequence.h"
 #include "AnimSequences\Players\PaperZDAnimPlayer.h"
 
-
-bool AGTCharacter::UseFullGuard()
+//INHERITED
+void AGTCharacter::BeginPlay()
 {
-	return (CharacterData->Shield != nullptr);
+	UE_LOG(LogTemp, Log, TEXT("BeginPlay Character"));
+
+	if (CharacterData)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Building from Data"));
+
+		CharacterData = UCharacterDataAsset::RandomCopyCharacter(CharacterData, 0);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Building %s from Scratch"), *GetName());
+		CharacterData = UCharacterDataAsset::NewCharacter();
+
+		if (!IsPartyCharacter())
+		{
+			CharacterData->BodyColorsHSL = CharacterData->BodyColorsHSL.ChangeTeamHue(0, CharacterData->BodyAsset->TeamColors);
+			CharacterData->HatColorsHSL = CharacterData->HatColorsHSL.ChangeTeamHue(0, CharacterData->HatAsset->TeamColors[CharacterData->HatIndex % 10]);
+		}
+	}
+
+	CharacterName = CharacterData->Name;
+	InitMaterials();
+	UpdateFacing();
+
+	Initiative = RollInitiative();
+	MoveDataID = -1;
+	bIsMyTurn = false;
+
+	Super::BeginPlay();
+
+	if (GetAnimInstance())
+	{
+		if (GetAnimInstance()->GetPlayer())
+		{
+			GetAnimInstance()->GetPlayer()->OnPlaybackSequenceChanged.AddDynamic(this, &AGTCharacter::OnAnimSequenceUpdated);
+			UE_LOG(LogTemp, Log, TEXT("got anim player for %s"), *GetName());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("could not get anim player for %s"), *GetName());
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("could not get anim instance for %s"), *GetName());
+	}
+}
+
+FORCEINLINE class AGTAIController* AGTCharacter::GetTacticsAI()
+{
+	return Cast<AGTAIController>(GetController());
 }
 
 AGTCharacter::AGTCharacter(const FObjectInitializer& ObjectInitializer)
@@ -48,6 +100,53 @@ void AGTCharacter::PostInitializeComponents()
 	HandSprite = Cast<UPaperFlipbookComponent>(GetDefaultSubobjectByName(TEXT("Hand")));
 }
 
+void AGTCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (bIsMoving)
+	{
+		if (MoveSteps.Num() == 0)
+		{
+			bIsMoving = false;
+			FinishedMoving();
+			return;
+			//DONE
+		}
+		else
+		{
+			MoveTimePassed += DeltaTime * 400;
+			if (MoveTimePassed >= MoveSteps[0].TimeToArrival)
+			{
+				if (MoveSteps.Num() == 1)
+				{
+					bIsMoving = false;
+					SetActorLocation(MoveSteps[0].CalcPosition(MoveSteps[0].TimeToArrival));
+					FinishedMoving();
+					return;
+					//DONE
+				}
+				MoveTimePassed -= MoveSteps[0].TimeToArrival;
+				MoveSteps.RemoveAt(0);
+				SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
+			}
+
+			SetActorLocation(MoveSteps[0].CalcPosition(MoveTimePassed));
+		}
+	}
+
+	UpdateFacing();
+	UGTBFL::FaceCamera(this, GetSprite());
+}
+
+void AGTCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+
+
+//SPRITES AND COSMETIC
 void AGTCharacter::InitMaterials()
 {
 	BodyDMI = GetSprite()->CreateDynamicMaterialInstance(0);
@@ -96,26 +195,39 @@ void AGTCharacter::InitMaterials()
 	OriginalScale = GetSprite()->GetRelativeScale3D();
 }
 
-void AGTCharacter::FrontBackFlip()
+void AGTCharacter::ResetAttachments()
+{
+
+	FAttachmentTransformRules atr = FAttachmentTransformRules(EAttachmentRule::KeepRelative, true);
+	HairSprite->AttachToComponent(GetSprite(), atr);
+	HatFrontSprite->AttachToComponent(GetSprite(), atr);
+	HatBackSprite->AttachToComponent(GetSprite(), atr);
+
+	WeaponSprite->AttachToComponent(GetSprite(), atr);
+	ShieldSprite->AttachToComponent(GetSprite(), atr);
+
+	UpdateFacing();
+}
+
+void AGTCharacter::UpdateFacing()
 {
 	float diff = FMath::Fmod((GetActorRotation().Yaw - UGameplayStatics::GetPlayerCameraManager(this, 0)->GetCameraRotation().Yaw + 360.0f), 360.0f);
 	float bodyFB, headFB, headFlip;
-	FName headSocket, shieldSocket, weaponSocket;
 	if (diff < 90) {
 		bodyFB = 2; headFB = 1; headFlip = 1;
-		headSocket = FName(TEXT("Head_2")); shieldSocket = FName(TEXT("Shield_2")); weaponSocket = FName(TEXT("Weapon_2"));
+		HeadSocketName = FName(TEXT("Head_2")); ShieldSocketName = FName(TEXT("Shield_2")); WeaponSocketName = FName(TEXT("Weapon_2"));
 	}
 	else if (diff < 180) {
 		bodyFB = 1; headFB = 0; headFlip = -1;
-		headSocket = FName(TEXT("Head_1")); shieldSocket = FName(TEXT("Shield_1")); weaponSocket = FName(TEXT("Weapon_1"));
+		HeadSocketName = FName(TEXT("Head_1")); ShieldSocketName = FName(TEXT("Shield_1")); WeaponSocketName = FName(TEXT("Weapon_1"));
 	}
 	else if (diff < 270) {
 		bodyFB = 0; headFB = 0; headFlip = 1;
-		headSocket = FName(TEXT("Head_0")); shieldSocket = FName(TEXT("Shield_0")); weaponSocket = FName(TEXT("Weapon_0"));
+		HeadSocketName = FName(TEXT("Head_0")); ShieldSocketName = FName(TEXT("Shield_0")); WeaponSocketName = FName(TEXT("Weapon_0"));
 	}
 	else {
 		bodyFB = 3; headFB = 1; headFlip = -1;
-		headSocket = FName(TEXT("Head_3")); shieldSocket = FName(TEXT("Shield_3")); weaponSocket = FName(TEXT("Weapon_3"));
+		HeadSocketName = FName(TEXT("Head_3")); ShieldSocketName = FName(TEXT("Shield_3")); WeaponSocketName = FName(TEXT("Weapon_3"));
 	}
 
 	BodyDMI->SetScalarParameterValue(TEXT("FrontBack"), bodyFB);
@@ -125,67 +237,312 @@ void AGTCharacter::FrontBackFlip()
 	HatBackDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
 
 	FAttachmentTransformRules atr = FAttachmentTransformRules(EAttachmentRule::KeepRelative, true);
-	HairSprite->AttachToComponent(GetSprite(), atr, headSocket);
-	HatFrontSprite->AttachToComponent(GetSprite(), atr, headSocket);
-	HatBackSprite->AttachToComponent(GetSprite(), atr, headSocket);
+	HairSprite->AttachToComponent(GetSprite(), atr, HeadSocketName);
+	HatFrontSprite->AttachToComponent(GetSprite(), atr, HeadSocketName);
+	HatBackSprite->AttachToComponent(GetSprite(), atr, HeadSocketName);
 
-	WeaponSprite->AttachToComponent(GetSprite(), atr, weaponSocket);
-	ShieldSprite->AttachToComponent(GetSprite(), atr, shieldSocket);
+	WeaponSprite->AttachToComponent(GetSprite(), atr, WeaponSocketName);
+	ShieldSprite->AttachToComponent(GetSprite(), atr, ShieldSocketName);
 
 	HairSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
 	HatFrontSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
 	HatBackSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
 }
 
-void AGTCharacter::BeginPlay()
+void AGTCharacter::OnAnimSequenceUpdated(const UPaperZDAnimSequence* From, const UPaperZDAnimSequence* To, float CurrentProgress)
 {
-	UE_LOG(LogTemp, Log, TEXT("BeginPlay Character"));
+	HandSprite->SetFlipbook(To->GetAnimationData<UPaperFlipbook*>());
+	HandSprite->SetPlaybackPosition(CurrentProgress, false);
+}
 
-	if (CharacterData)
+
+
+//MOVEMENT
+void AGTCharacter::FinishedMoving()
+{
+	if (IsPendingKill())
 	{
-		UE_LOG(LogTemp, Log, TEXT("Building from Data"));
+		return;
+	}
 
-		CharacterData = UCharacterDataAsset::RandomCopyCharacter(CharacterData, 0);
+	if (GetGameInstance()->IsPendingKillOrUnreachable())
+	{
+		return;
+	}
+
+	/*GetSprite()->SetFlipbook(FBIdle);
+	HandSprite->SetFlipbook(FBIdle);*/
+	ResetAttachments();
+	SetActorLocation(ANavGrid::Instance->AlignToGrid(GetActorLocation()));
+	ANavGrid::AddActorToGrid(this);
+	ANavGrid::MoveDataID++;
+	ACameraPawn::Instance->AttachCamera(nullptr);
+	if (IsPartyCharacter())
+		AGTPlayerController::Instance->MoveCompleted();
+
+	if (ActionInProgress.Action)
+	{
+		StartAction();
 	}
 	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("Building %s from Scratch"), *GetName());
-		CharacterData = UCharacterDataAsset::NewCharacter();
+		CompleteAction();
+}
 
-		if (!IsPartyCharacter())
+const FNodeData* AGTCharacter::FindMoveData(FVector vec) const
+{
+	for (int i = 0; i < MoveGrid.Num(); i++)
+	{
+		if (MoveGrid[i].Num() == 0)
 		{
-			CharacterData->BodyColorsHSL = CharacterData->BodyColorsHSL.ChangeTeamHue(0, CharacterData->BodyAsset->TeamColors);
-			CharacterData->HatColorsHSL = CharacterData->HatColorsHSL.ChangeTeamHue(0, CharacterData->HatAsset->TeamColors[CharacterData->HatIndex % 10]);
+			continue;
+		}
+
+		if (MoveGrid[i][0].Location.X == vec.X)
+		{
+			for (int j = 0; j < MoveGrid[i].Num(); j++)
+			{
+				if (MoveGrid[i][j].Location.Y == vec.Y)
+					return &(MoveGrid[i][j]);
+			}
+
+			return nullptr;
 		}
 	}
 
-	CharacterName = CharacterData->Name;
-	InitMaterials();
-	FrontBackFlip();
+	return nullptr;
+}
 
-	Initiative = RollInitiative();
-	MoveDataID = -1;
-	bIsMyTurn = false;
-
-	Super::BeginPlay();
-
-	if (GetAnimInstance())
+bool AGTCharacter::GetPathTo(FVector destination, FNavPath& path)
+{
+	UE_LOG(LogTemp, Log, TEXT("%s GetPathTo %s"), *GetName(), *destination.ToString());
+	destination = ANavGrid::Instance->AlignToGrid(destination);
+	const FNodeData* data = FindMoveData(destination);
+	if (data == nullptr)
 	{
-		if (GetAnimInstance()->GetPlayer())
+		//destination may not be in movedata due to range, so no error message
+		UE_LOG(LogTemp, Log, TEXT("PathBack failed: destination %s not found in MoveData"), *destination.ToCompactString());
+		UE_LOG(LogTemp, Log, TEXT("MoveGrid.Num() = %d"), MoveGrid.Num());
+		return false;
+	}
+
+	path.Path.Emplace(destination);
+	path.Cost = data->TotalCost;
+
+	int sanity = 0;
+	while (data->TotalCost != 0)
+	{
+		//UE_LOG(LogTemp, Log, TEXT("PathBack: %s %f"), *data->Location.ToCompactString(), data->Value);
+		data = FindMoveData(data->Origin);
+		if (data == nullptr)
 		{
-			GetAnimInstance()->GetPlayer()->OnPlaybackSequenceChanged.AddDynamic(this, &AGTCharacter::OnAnimSequenceUpdated);
-			UE_LOG(LogTemp, Log, TEXT("got anim player for %s"), *GetName());
+			UE_LOG(LogTemp, Error, TEXT("PathBack failed: origin not found in MoveData"));
+			return false;
+		}
+
+		path.Path.EmplaceAt(0, data->Location);
+
+		if (++sanity > 100)
+		{
+			UE_LOG(LogTemp, Error, TEXT("PathBack failed: sanity"));
+			return false;
+		}
+	}
+
+	if (IsPartyCharacter())
+		ANavGrid::Instance->ShowPath(path.Path);
+
+	return true;
+}
+
+void AGTCharacter::StartMoving(FNavPath path)
+{
+	CurrentAP -= path.Cost;
+	bIsMoving = true;
+	MoveTimePassed = 0;
+	MoveSteps.Empty(path.Path.Num() - 1);
+	for (int i = 0; i < path.Path.Num() - 1; i++)
+	{
+		MoveSteps.Add(FMovementStep(path.Path[i], path.Path[i + 1]));
+	}
+	SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
+	ANavGrid::RemoveActorFromGrid(this);
+	ACameraPawn::Instance->AttachCamera(this);
+	/*GetSprite()->SetFlipbook(FBWalk);
+	HandSprite->SetFlipbook(FBWalk);*/
+}
+
+TArray<FNodeData> AGTCharacter::GetReachableArea()
+{
+	TArray<FNodeData> result;
+	if (!ANavGrid::Instance)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ANavGrid Instance is null"));
+		return result;
+	}
+	ANavGrid::Instance->GenerateMoveData(this);
+
+	for (int i = 0; i < MoveGrid.Num(); i++)
+	{
+		for (int j = 0; j < MoveGrid[i].Num(); j++)
+		{
+
+			if (!MoveGrid[i][j].Occupied && MoveGrid[i][j].TotalCost <= CurrentAP)
+				result.Add(MoveGrid[i][j]);
+		}
+	}
+
+	return result;
+}
+
+FNodeData AGTCharacter::NearestReachableLocationToTarget(FVector target, float range)
+{
+	float minCost = 999;
+	float minDist = 999;
+	FNodeData location;
+	TArray<FNodeData> reachable = GetReachableArea();
+	for (int i = 0; i < reachable.Num(); i++)
+	{
+		//UE_LOG(LogTemp, Log, TEXT("C: %f D: %f %s"), minCost, minDist, *reachable[i].Location.ToString());
+		float dist = FMath::Abs(ANavGrid::Instance->GetDistance(target - reachable[i].Location) - range);
+		if (dist < minDist)
+		{
+			minDist = dist;
+			minCost = reachable[i].TotalCost;
+			location = reachable[i];
+		}
+		else if (dist == minDist && reachable[i].TotalCost < minCost)
+		{
+			minCost = reachable[i].TotalCost;
+			location = reachable[i];
+		}
+	}
+
+	if (minCost == 999)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Could not find a location"));
+		return FNodeData(location);
+	}
+	//UE_LOG(LogTemp, Log, TEXT("NRLtT: %s"), *location.Location.ToString());
+	return location;
+}
+
+
+
+//ACTIONS
+void AGTCharacter::StartAction()
+{
+	if(!ActionInProgress.Action) return;
+	UE_LOG(LogTemp, Log, TEXT("Starting %s"), *ActionInProgress.Action->Name.ToString());
+
+	SetActorRotation(((ActionInProgress.Location - GetActorLocation()) * FVector(1, 1, 0)).ToOrientationRotator());
+	//PlayActionAnim(ActionInProgress.Action->Anim);
+	GetAnimInstance()->JumpToNode(TEXT("Action"));
+
+	UParticleSystem** partPtr = ActionInProgress.Action->Particles.Find(TEXT("StartTip")); //start of action; tip of weapon
+	if (partPtr != nullptr)
+	{
+		if (WeaponSprite->DoesSocketExist(TEXT("Tip")))
+		{
+			UParticleSystemComponent* psc = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), *partPtr, WeaponSprite->GetSocketTransform(TEXT("Tip")));
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("could not get anim player for %s"), *GetName());
+			UParticleSystemComponent* psc = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), *partPtr, GetSprite()->GetSocketTransform(WeaponSocketName));
 		}
 	}
+}
+
+EActionAnim AGTCharacter::GetActionAnim()
+{
+	if (!ActionInProgress.Action) return EActionAnim::Attack;
+	return ActionInProgress.Action->Anim;
+}
+
+void AGTCharacter::PerformAction(FActionData actionData)
+{
+	ActionInProgress = actionData;
+	if(ActionInProgress.Action)
+		StartAction();
 	else
+		CompleteAction();
+}
+
+void AGTCharacter::ResolveAction()
+{
+	if (ActionInProgress.Action)
+		ActionInProgress.Action->Resolve(this, ActionInProgress.Location);
+	else
+		CompleteAction();
+}
+
+void AGTCharacter::CompleteAction()
+{
+	ActionInProgress.Action = nullptr;
+
+	if (IsPartyCharacter())
 	{
-		UE_LOG(LogTemp, Error, TEXT("could not get anim instance for %s"), *GetName());
+		ANavGrid::Instance->ShowMoveRange(this);
+		UGTHUDCode::Instance->ShowHideCommandMenu(this);
+	}
+	else
+		ANavGrid::Instance->GenerateMoveData(this);
+
+
+	if (CharacterData && !IsPartyCharacter()) //TODO: allow for AI control on Party Characters?
+	{
+		bool bEndTurn = true; //if AI can't perform any objectives, end turn
+		for (int i = 0; i < CharacterData->AIObjectives.Num(); i++)
+		{
+			if (CharacterData->AIObjectives[i]->Attempt(this))
+			{
+				bEndTurn = false;
+				UE_LOG(LogTemp, Log, TEXT("%s successful"), *CharacterData->AIObjectives[i]->GetDebugString());
+				break;
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("%s failed"), *CharacterData->AIObjectives[i]->GetDebugString());
+			}
+		}
+
+		if (bEndTurn)
+		{
+			UE_LOG(LogTemp, Log, TEXT("all objectives impossible, ending turn"));
+
+			FTimerHandle TimerHandle;
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
+		}
 	}
 }
+
+void AGTCharacter::QueueAction(FNavPath path, FActionData actionData)
+{
+	if (path.Path.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Path is empty"));
+		EndTurn();
+		return;
+	}
+	else if (path.Path.Num() == 1) //assuming that location should be the character's current location, thus don't need to move
+	{
+		ActionInProgress = actionData;
+		if (ActionInProgress.Action)
+		{
+			StartAction();
+		}
+		else
+			CompleteAction();
+
+		return;
+	}
+
+	StartMoving(path);
+	ActionInProgress = actionData;
+}
+
+
+
+
 
 void AGTCharacter::BeginTurn_Implementation()
 {
@@ -273,16 +630,6 @@ void AGTCharacter::EndTurn_Implementation()
 	UCombatManager::AdvanceInitiative();
 }
 
-void AGTCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-}
-
-FORCEINLINE class AGTAIController* AGTCharacter::GetTacticsAI()
-{
-	return Cast<AGTAIController>(GetController());
-}
-
 int32 AGTCharacter::GetCurrentHealth() const
 {
 	/*int32* health = Stats->CurrentVitals.Find(EVitals::Health);
@@ -299,52 +646,6 @@ int32 AGTCharacter::GetMaxHealth() const
 		return health->TotalValue;*/
 
 	return 0;
-}
-
-void AGTCharacter::ResolveAction()
-{
-	if (ActionInProgress.Action)
-		ActionInProgress.Action->Resolve(this, ActionInProgress.Location);
-	else
-		CompleteAction();
-}
-
-void AGTCharacter::CompleteAction()
-{
-	if (IsPartyCharacter())
-	{
-		ANavGrid::Instance->ShowMoveRange(this);
-		UGTHUDCode::Instance->ShowHideCommandMenu(this);
-	}
-	else
-		ANavGrid::Instance->GenerateMoveData(this);
-
-
-	if (CharacterData && !IsPartyCharacter()) //TODO: allow for AI control on Party Characters?
-	{
-		bool bEndTurn = true; //if AI can't perform any objectives, end turn
-		for (int i = 0; i < CharacterData->AIObjectives.Num(); i++)
-		{
-			if (CharacterData->AIObjectives[i]->Attempt(this))
-			{
-				bEndTurn = false;
-				UE_LOG(LogTemp, Log, TEXT("%s successful"), *CharacterData->AIObjectives[i]->GetDebugString());
-				break;
-			}
-			else
-			{
-				UE_LOG(LogTemp, Log, TEXT("%s failed"), *CharacterData->AIObjectives[i]->GetDebugString());
-			}
-		}
-
-		if (bEndTurn)
-		{
-			UE_LOG(LogTemp, Log, TEXT("all objectives impossible, ending turn"));
-
-			FTimerHandle TimerHandle;
-			GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
-		}
-	}
 }
 
 float AGTCharacter::RollInitiative()
@@ -397,117 +698,9 @@ void AGTCharacter::OnHoverEnd()
 	GetSprite()->SetSpriteColor(FLinearColor(0, 0, 0));
 }
 
-bool AGTCharacter::GetPathTo(FVector destination, FNavPath& path)
-{
-	UE_LOG(LogTemp, Log, TEXT("%s GetPathTo %s"), *GetName(), *destination.ToString());
-	destination = ANavGrid::Instance->AlignToGrid(destination);
-	const FNodeData* data = FindMoveData(destination);
-	if (data == nullptr)
-	{
-		//destination may not be in movedata due to range, so no error message
-		UE_LOG(LogTemp, Log, TEXT("PathBack failed: destination %s not found in MoveData"), *destination.ToCompactString());
-		UE_LOG(LogTemp, Log, TEXT("MoveGrid.Num() = %d"), MoveGrid.Num());
-		return false;
-	}
 
-	path.Path.Emplace(destination);
-	path.Cost = data->TotalCost;
 
-	int sanity = 0;
-	while (data->TotalCost != 0)
-	{
-		//UE_LOG(LogTemp, Log, TEXT("PathBack: %s %f"), *data->Location.ToCompactString(), data->Value);
-		data = FindMoveData(data->Origin);
-		if (data == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("PathBack failed: origin not found in MoveData"));
-			return false;
-		}
 
-		path.Path.EmplaceAt(0, data->Location);
-
-		if (++sanity > 100)
-		{
-			UE_LOG(LogTemp, Error, TEXT("PathBack failed: sanity"));
-			return false;
-		}
-	}
-
-	if(IsPartyCharacter())
-		ANavGrid::Instance->ShowPath(path.Path);
-
-	return true;
-}
-
-void AGTCharacter::StartMoving(FNavPath path)
-{
-	CurrentAP -= path.Cost;
-	bIsMoving = true;
-	MoveTimePassed = 0;
-	MoveSteps.Empty(path.Path.Num() - 1);
-	for (int i = 0; i < path.Path.Num() - 1; i++)
-	{
-		MoveSteps.Add(FMovementStep(path.Path[i], path.Path[i + 1]));
-	}
-	SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
-	ANavGrid::RemoveActorFromGrid(this);
-	ACameraPawn::Instance->AttachCamera(this);
-}
-
-TArray<FNodeData> AGTCharacter::GetReachableArea()
-{
-	TArray<FNodeData> result;
-	if (!ANavGrid::Instance)
-	{
-		UE_LOG(LogTemp, Error, TEXT("ANavGrid Instance is null"));
-		return result;
-	}
-	ANavGrid::Instance->GenerateMoveData(this);
-
-	for (int i = 0; i < MoveGrid.Num(); i++)
-	{
-		for (int j = 0; j < MoveGrid[i].Num(); j++)
-		{
-
-			if (!MoveGrid[i][j].Occupied && MoveGrid[i][j].TotalCost <= CurrentAP)
-				result.Add(MoveGrid[i][j]);
-		}
-	}
-
-	return result;
-}
-
-FNodeData AGTCharacter::NearestReachableLocationToTarget(FVector target, float range)
-{
-	float minCost = 999;
-	float minDist = 999;
-	FNodeData location;
-	TArray<FNodeData> reachable = GetReachableArea();
-	for (int i = 0; i < reachable.Num(); i++)
-	{
-		//UE_LOG(LogTemp, Log, TEXT("C: %f D: %f %s"), minCost, minDist, *reachable[i].Location.ToString());
-		float dist = FMath::Abs(ANavGrid::Instance->GetDistance(target - reachable[i].Location) - range);
-		if (dist < minDist)
-		{
-			minDist = dist;
-			minCost = reachable[i].TotalCost;
-			location = reachable[i];
-		}
-		else if (dist == minDist && reachable[i].TotalCost < minCost)
-		{
-			minCost = reachable[i].TotalCost;
-			location = reachable[i];
-		}
-	}
-
-	if (minCost == 999)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Could not find a location"));
-		return FNodeData(location);
-	}
-	//UE_LOG(LogTemp, Log, TEXT("NRLtT: %s"), *location.Location.ToString());
-	return location;
-}
 
 bool AGTCharacter::IsSameTeam(ITargetable target)
 {
@@ -516,31 +709,6 @@ bool AGTCharacter::IsSameTeam(ITargetable target)
 		return false;
 
 	return targetCharacter->Team == Team;
-}
-
-void AGTCharacter::QueueAction(FNavPath path, FActionData actionData)
-{
-	if (path.Path.Num() == 0)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Path is empty"));
-		EndTurn();
-		return;
-	}
-	else if (path.Path.Num() == 1) //assuming that location should be the character's current location, thus don't need to move
-	{
-		ActionInProgress = actionData;
-		if (ActionInProgress.Action)
-		{
-			ActionInProgress.Action->Perform(this, ActionInProgress.Location);
-		}
-		else
-			CompleteAction();
-
-		return;
-	}
-
-	StartMoving(path);
-	ActionInProgress = actionData;
 }
 
 TArray<class UActionAttack*> AGTCharacter::GetAllAttacks()
@@ -557,98 +725,11 @@ TArray<class UActionAttack*> AGTCharacter::GetAllAttacks()
 	return attacks;
 }
 
-void AGTCharacter::FinishedMoving()
-{
-	if (IsPendingKill())
-	{
-		return;
-	}
 
-	if (GetGameInstance()->IsPendingKillOrUnreachable())
-	{
-		return;
-	}
 
-	SetActorLocation(ANavGrid::Instance->AlignToGrid(GetActorLocation()));
-	ANavGrid::AddActorToGrid(this);
-	ANavGrid::MoveDataID++;
-	ACameraPawn::Instance->AttachCamera(nullptr);
-	if(IsPartyCharacter())
-		AGTPlayerController::Instance->MoveCompleted();
 
-	if (ActionInProgress.Action)
-	{
-		ActionInProgress.Action->Perform(this, ActionInProgress.Location);
-	}
-	else
-		CompleteAction();
-}
 
-const FNodeData* AGTCharacter::FindMoveData(FVector vec) const
-{
-	for (int i = 0; i < MoveGrid.Num(); i++)
-	{
-		if (MoveGrid[i].Num() == 0)
-		{
-			continue;
-		}
 
-		if (MoveGrid[i][0].Location.X == vec.X)
-		{
-			for (int j = 0; j < MoveGrid[i].Num(); j++)
-			{
-				if (MoveGrid[i][j].Location.Y == vec.Y)
-					return &(MoveGrid[i][j]);
-			}
-
-			return nullptr;
-		}
-	}
-
-	return nullptr;
-}
-
-void AGTCharacter::OnAnimSequenceUpdated(const UPaperZDAnimSequence* From, const UPaperZDAnimSequence* To, float CurrentProgress)
-{
-	HandSprite->SetFlipbook(To->GetAnimationData<UPaperFlipbook*>());
-	HandSprite->SetPlaybackPosition(CurrentProgress, false);
-}
-
-void AGTCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (bIsMoving)
-	{
-		if (MoveSteps.Num() == 0)
-		{
-			bIsMoving = false;
-			FinishedMoving();
-			return;
-			//DONE
-		}
-		else
-		{
-			MoveTimePassed += DeltaTime * 400;
-			if (MoveTimePassed >= MoveSteps[0].TimeToArrival)
-			{
-				if (MoveSteps.Num() == 1)
-				{
-					bIsMoving = false;
-					SetActorLocation(MoveSteps[0].CalcPosition(MoveSteps[0].TimeToArrival));
-					FinishedMoving();
-					return;
-					//DONE
-				}
-				MoveTimePassed -= MoveSteps[0].TimeToArrival;
-				MoveSteps.RemoveAt(0);
-				SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
-			}
-
-			SetActorLocation(MoveSteps[0].CalcPosition(MoveTimePassed));
-		}
-	}
-}
 
 //#if WITH_EDITOR
 //void AGTCharacter::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)

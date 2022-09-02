@@ -63,4 +63,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "UI|HUD")
 		void ShowMoveCommand();
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Debug")
+		void UpdateDebugText(const FString & text);
 };
