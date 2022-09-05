@@ -178,6 +178,7 @@ public:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	/** Aligns X & Y to grid; does not affect Z. Use GetGridLocation if need a specific location (for comparison/equality, etc)*/
 	UFUNCTION(BlueprintPure, Category = "Tactics")
 		virtual FVector AlignToGrid(FVector vector);
 

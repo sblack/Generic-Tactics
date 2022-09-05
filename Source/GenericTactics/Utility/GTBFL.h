@@ -47,6 +47,14 @@ enum class EActionAnim : uint8
 	Crouch
 };
 
+UENUM(BlueprintType)
+enum class EStatusAnim : uint8
+{
+	Idle,
+	Struck,
+	Down
+};
+
 /**
  * 
  */

@@ -288,8 +288,12 @@ void AGTPlayerController::OnLeftClickUpCombat()
 		}
 		else
 		{
-			SelectedLocation = HoverLocation;
-			ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, SelectedLocation, SelectedAction);
+			//TODO: check whether Action CAN target self
+			if(HoverLocation != ActiveCharacter->GetActorLocation())
+			{
+				SelectedLocation = HoverLocation;
+				ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, SelectedLocation, SelectedAction);
+			}
 		}
 	}
 }

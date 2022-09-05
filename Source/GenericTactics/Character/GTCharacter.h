@@ -118,6 +118,16 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 		class UMaterialInstanceDynamic* HandDMI;
 
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
+		void PlayHitAnim(bool bMajor);
+
+public:
+	UPROPERTY(BlueprintReadWrite)
+		EStatusAnim StatusAnim = EStatusAnim::Idle;
+
+		/**SetSpriteColor for all sprite and flipbook components*/
+	UFUNCTION(BlueprintCallable)
+		void SetSpriteColor(FLinearColor color);
 
 
 //MOVEMENT
@@ -221,12 +231,6 @@ public:
 	UFUNCTION(BlueprintPure)
 		bool IsPartyCharacter() const { return Team == 0; }
 
-	//UPROPERTY(BlueprintReadWrite)
-	//	EAnimState AnimState = EAnimState::Idle;
-
-	UPROPERTY(BlueprintReadWrite)
-		bool bDead = false;
-
 	//UFUNCTION(BlueprintPure, Category = "Combat")
 	//	EActionAnim GetActionAnim();
 
@@ -247,9 +251,6 @@ public:
 	virtual int32 GetCurrentHealth() const override;
 
 	virtual int32 GetMaxHealth() const override;
-
-	/*UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
-		void PlayHitAnim(bool bMajor);*/
 
 	float RollInitiative();
 

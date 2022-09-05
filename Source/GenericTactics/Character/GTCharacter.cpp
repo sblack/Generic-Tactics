@@ -253,6 +253,18 @@ void AGTCharacter::OnAnimSequenceUpdated(const UPaperZDAnimSequence* From, const
 {
 	HandSprite->SetFlipbook(To->GetAnimationData<UPaperFlipbook*>());
 	HandSprite->SetPlaybackPosition(CurrentProgress, false);
+	ResetAttachments();
+}
+
+void AGTCharacter::SetSpriteColor(FLinearColor color)
+{
+	GetSprite()->SetSpriteColor(color);
+	HairSprite->SetSpriteColor(color);
+	HatBackSprite->SetSpriteColor(color);
+	HatFrontSprite->SetSpriteColor(color);
+	HandSprite->SetSpriteColor(color);
+	WeaponSprite->SetSpriteColor(color);
+	ShieldSprite->SetSpriteColor(color);
 }
 
 
@@ -547,12 +559,12 @@ void AGTCharacter::QueueAction(FNavPath path, FActionData actionData)
 void AGTCharacter::BeginTurn_Implementation()
 {
 	UE_LOG(LogTemp, Log, TEXT("Begin Turn %s"), *GetName());
-	if (bDead)
+	/*if (bDead)
 	{
 		UE_LOG(LogTemp, Log, TEXT("%s is dead, ending turn"), *GetName());
 		EndTurn();
 		return;
-	}
+	}*/
 	CurrentAP = 5;
 	/*CurrentAP += Stats->MaxAP.TotalValue;
 	if (CurrentAP > Stats->MaxAP.TotalValue * 1.5f)
@@ -685,17 +697,17 @@ int32 AGTCharacter::ApplyDamage(int32 amount, EDamageType damageType, EVitals vi
 void AGTCharacter::OnHit(bool bMajor)
 {
 	ITargetableInterface::OnHit(bMajor);
-	//PlayHitAnim(bMajor);
+	PlayHitAnim(bMajor);
 }
 
 void AGTCharacter::OnHoverStart()
 {
-	GetSprite()->SetSpriteColor(FLinearColor(.5f, .5f, 0));
+	SetSpriteColor(FLinearColor(1.5f, 1.5f, .5f));
 }
 
 void AGTCharacter::OnHoverEnd()
 {
-	GetSprite()->SetSpriteColor(FLinearColor(0, 0, 0));
+	SetSpriteColor(FLinearColor(1, 1, 1));
 }
 
 

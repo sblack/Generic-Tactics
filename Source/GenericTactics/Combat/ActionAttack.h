@@ -13,5 +13,6 @@ UCLASS()
 class GENERICTACTICS_API UActionAttack : public UActionDirect
 {
 	GENERATED_BODY()
-	
+public:
+		virtual void Resolve(class AGTCharacter* user, FVector target) override;
 };
