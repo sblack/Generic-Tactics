@@ -176,7 +176,7 @@ void UCombatManager::InitiateActionTarget(class UAction* action, class AGTCharac
 
 	Instance->bPerformingActions = true;
 	//action->Perform(attacker, target->GetLocation() - attacker->GetActorLocation());
-	UGTHUDCode::Instance->ShowAttackText(NSLOCTEXT("Combat", "UIAttack", "Attack"));
+	//UGTHUDCode::Instance->ShowAttackText(NSLOCTEXT("Combat", "UIAttack", "Attack"));
 }
 
 void UCombatManager::InitiateActionLocation(class UAction* action, class AGTCharacter* attacker, FVector location)
@@ -198,7 +198,7 @@ void UCombatManager::InitiateActionLocation(class UAction* action, class AGTChar
 
 	Instance->bPerformingActions = true;
 	//action->Perform(attacker, location - attacker->GetActorLocation());
-	UGTHUDCode::Instance->ShowAttackText(NSLOCTEXT("Combat", "UIAttack", "Attack"));
+	//UGTHUDCode::Instance->ShowAttackText(NSLOCTEXT("Combat", "UIAttack", "Attack"));
 }
 
 void UCombatManager::InitiatePreparedAction(class AGTCharacter* attacker)
@@ -318,4 +318,18 @@ void UCombatManager::UpdateAreaOfEffect(FVector source, FVector target)
 	}
 
 	ANavGrid::Instance->ShowTargeting(source, Instance->PreppedAction->MaxRange);*/
+}
+
+bool UCombatManager::RollAttack(class UActionAttack* action, class AGTCharacter* attacker, TScriptInterface<ITargetableInterface> target)
+{
+	if (Instance)
+	{
+		//TODO: more in-depth calculations (eg acc bonus based on target, def bonus based on attacker, etc)
+		return Instance->AttackRoll(attacker->GetAccuracy(action->AttackType), target->GetDefense(action->AttackType));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No CombatManager"));
+		return true;
+	}
 }

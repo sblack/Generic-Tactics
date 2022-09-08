@@ -3,6 +3,7 @@
 
 #include "GTCharacter.h"
 #include "GTAIController.h"
+#include "StatsBlock.h"
 #include "../Combat/Action.h"
 //#include "../Combat/CombatManager.h"
 //#include "../Movement/NavGrid.h"
@@ -47,6 +48,9 @@ void AGTCharacter::BeginPlay()
 	CharacterName = CharacterData->Name;
 	InitMaterials();
 	UpdateFacing();
+
+	Stats = NewObject<UStatsBlock>(this, TEXT("Stats"));
+	Stats->FillFromData(CharacterData);
 
 	Initiative = RollInitiative();
 	MoveDataID = -1;
@@ -554,6 +558,39 @@ void AGTCharacter::QueueAction(FNavPath path, FActionData actionData)
 
 
 
+//STATS
+int32 AGTCharacter::GetCurrentHealth() const
+{
+	int32* health = Stats->CurrentVitals.Find(EVitals::Health);
+	if (health != nullptr)
+		return *health;
+
+	return 0;
+}
+
+int32 AGTCharacter::GetMaxHealth() const
+{
+	int32* health = Stats->MaxVitals.Find(EVitals::Health);
+	if (health != nullptr)
+		return *health;
+
+	return 0;
+}
+
+int32 AGTCharacter::GetDefense(EAttackType attack) const
+{
+	return Stats->Defense[attack];
+}
+
+int32 AGTCharacter::GetAccuracy(EAttackType attack) const
+{
+	return Stats->Accuracy[attack];
+}
+
+
+
+
+
 
 
 void AGTCharacter::BeginTurn_Implementation()
@@ -640,24 +677,6 @@ void AGTCharacter::EndTurn_Implementation()
 	}
 
 	UCombatManager::AdvanceInitiative();
-}
-
-int32 AGTCharacter::GetCurrentHealth() const
-{
-	/*int32* health = Stats->CurrentVitals.Find(EVitals::Health);
-	if (health != nullptr)
-		return *health;*/
-
-	return 0;
-}
-
-int32 AGTCharacter::GetMaxHealth() const
-{
-	/*FStatsInt* health = Stats->Vitals.Find(EVitals::Health);
-	if (health != nullptr)
-		return health->TotalValue;*/
-
-	return 0;
 }
 
 float AGTCharacter::RollInitiative()

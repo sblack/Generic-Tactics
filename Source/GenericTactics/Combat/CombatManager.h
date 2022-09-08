@@ -61,6 +61,10 @@ protected:
 	//DO I STILL NEED THIS?
 	void AdvanceActionQueue();
 
+	/** True = hit */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Combat")
+		bool AttackRoll(int32 accuracy, int32 defense);
+
 public:
 
 	UPROPERTY(BlueprintReadOnly)
@@ -122,4 +126,6 @@ public:
 		static void PrepareDirectAction(class UActionDirect* action);
 
 	static void UpdateAreaOfEffect(FVector source, FVector target);
+
+	static bool RollAttack(class UActionAttack* action, class AGTCharacter* attacker, TScriptInterface<ITargetableInterface> target);
 };

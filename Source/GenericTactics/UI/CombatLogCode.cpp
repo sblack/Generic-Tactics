@@ -2,7 +2,7 @@
 
 
 #include "CombatLogCode.h"
-#include "Components/TextBlock.h"
+#include "Components/RichTextBlock.h"
 
 UCombatLogCode* UCombatLogCode::Instance;
 

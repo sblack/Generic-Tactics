@@ -14,5 +14,8 @@ class GENERICTACTICS_API UActionAttack : public UActionDirect
 {
 	GENERATED_BODY()
 public:
-		virtual void Resolve(class AGTCharacter* user, FVector target) override;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		EAttackType AttackType;
+
+	virtual void Resolve(class AGTCharacter* user, FVector target) override;
 };

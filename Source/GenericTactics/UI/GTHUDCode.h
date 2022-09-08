@@ -16,6 +16,17 @@ class GENERICTACTICS_API UGTHUDCode : public UUserWidget
 
 protected:
 
+	UPROPERTY(EditAnywhere)
+		int MaxMessages = 10;
+
+	TArray<FText> Messages;
+
+	int MessageCount = 0;
+	int TopMessage = 0;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class URichTextBlock* CombatLog;
+
 	virtual void NativeConstruct() override;
 
 	virtual void NativeDestruct() override;
@@ -28,6 +39,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "UI|HUD")
 		void ShowCharacterInfo(class AGTCharacter* character);
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "UI|HUD")
+		void RefreshCharacterVitals();
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "UI|HUD")
 		void ShowTargetInfo(const TScriptInterface<ITargetableInterface>& target);
@@ -44,11 +58,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "UI|HUD")
 		void HideCommands();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "UI|HUD")
+	//what was this for?
+	/*UFUNCTION(BlueprintImplementableEvent, Category = "UI|HUD")
 		void ShowAttackText(const FText& message);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "UI|HUD")
-		void ClearAttackText();
+		void ClearAttackText();*/
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "UI|HUD")
 		void FlashRed();
@@ -66,4 +81,7 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Debug")
 		void UpdateDebugText(const FString & text);
+
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+		void LogCombatMessage(FText text);
 };

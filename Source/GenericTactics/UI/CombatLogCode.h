@@ -24,7 +24,7 @@ protected:
 	int TopMessage = 0;
 
 	UPROPERTY(BlueprintReadWrite)
-		class UTextBlock* TextBlock;
+		class URichTextBlock* TextBlock;
 
 	virtual void NativeConstruct() override;
 

@@ -190,6 +190,19 @@ public:
 
 
 
+//STATS
+public:
+	UPROPERTY(Transient, BlueprintReadOnly)
+		class UStatsBlock* Stats;
+
+	virtual int32 GetCurrentHealth() const override;
+
+	virtual int32 GetMaxHealth() const override;
+
+	virtual int32 GetDefense(EAttackType attack) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	int32 GetAccuracy(EAttackType attack) const;
 
 
 protected:
@@ -211,9 +224,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, meta = (ExposeOnSpawn))
 		class UCharacterDataAsset* CharacterData;
-
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	//	class UCharacterStatsComponent* Stats;
 
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	//	class UCharacterEquipmentComponent* Equipment;
@@ -248,15 +258,9 @@ public:
 
 	virtual FText GetTargetName() const override { return CharacterName; }
 
-	virtual int32 GetCurrentHealth() const override;
-
-	virtual int32 GetMaxHealth() const override;
-
 	float RollInitiative();
 
 	//bool CanReact();
-
-	//float GetAttackBonus();
 
 	virtual int32 ApplyDamage(int32 amount, EDamageType damageType, EVitals vital) override;
 

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 //#include "EngineMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Misc/EnumRange.h"
 #include "GTBFL.generated.h"
 
 UENUM(BlueprintType)
@@ -12,9 +13,9 @@ enum class EVitals : uint8
 {
 	Health,
 	Stamina,
-	Mana,
-	COUNT UMETA(Hidden)
+	Mana
 };
+ENUM_RANGE_BY_FIRST_AND_LAST(EVitals, EVitals::Health, EVitals::Mana);
 
 UENUM(BlueprintType)
 enum class EDamageType : uint8
@@ -26,9 +27,9 @@ enum class EDamageType : uint8
 	Acid,
 	Cold,
 	Electric,
-	Typeless, //if any more are added, this MUST remain the last
-	COUNT UMETA(Hidden)
+	Typeless //if any more are added, this MUST remain the last
 };
+ENUM_RANGE_BY_FIRST_AND_LAST(EDamageType, EDamageType::Piercing, EDamageType::Typeless);
 
 UENUM(BlueprintType)
 enum class EAttackType : uint8
@@ -37,6 +38,8 @@ enum class EAttackType : uint8
 	Range,
 	Magic
 };
+ENUM_RANGE_BY_FIRST_AND_LAST(EAttackType, EAttackType::Melee, EAttackType::Magic);
+
 
 UENUM(BlueprintType)
 enum class EActionAnim : uint8

@@ -2,6 +2,7 @@
 
 
 #include "ActionAttack.h"
+#include "CombatManager.h"
 #include "../Movement/NavGrid.h"
 
 void UActionAttack::Resolve(class AGTCharacter* user, FVector target)
@@ -16,8 +17,10 @@ void UActionAttack::Resolve(class AGTCharacter* user, FVector target)
 		//TODO: team/object check
 		if (data.Occupant && data.Occupant != user)
 		{
-			//TODO: attack roll
-			data.Occupant->OnHit(false);
+			if(UCombatManager::RollAttack(this, user, data.Occupant))
+			{
+				data.Occupant->OnHit(false);
+			}
 		}
 	}
 }

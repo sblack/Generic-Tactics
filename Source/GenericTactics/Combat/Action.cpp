@@ -7,12 +7,13 @@
 //#include "../Items/ItemWeapon.h"
 #include "../Movement/NavGrid.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Misc/EnumRange.h"
 
 UAction::UAction()
 {
-	for (int i = 0 ; i < (int)EVitals::COUNT; i++)
+	for (EVitals vital : TEnumRange<EVitals>())
 	{
-		VitalCosts.Add((EVitals)i, 0);
+		VitalCosts.Add(vital, 0);
 	}
 }
 
@@ -26,7 +27,7 @@ EActionUsable UAction::CanUseTarget(class AGTCharacter* user, FVector target)
 		return EActionUsable::OutOfRange;
 	}
 
-	for (int i = 0; i < (int)EVitals::COUNT; i++)
+	for (EVitals vital : TEnumRange<EVitals>())
 	{
 		//if (VitalCosts[(EVitals)i] > user->Stats->CurrentVitals[(EVitals)i])
 		//	return EActionUsable::InsufficientVital;
