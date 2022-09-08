@@ -7,6 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "../Character/GTAIController.h"
 #include "../Character/GTCharacter.h"
+#include "../Character/StatsBlock.h"
+#include "../Movement/NavGrid.h"
 #include "../Player/CameraPawn.h"
 //#include "../Player/GTPlayerController.h"
 #include "../UI/GTHUDCode.h"
@@ -50,26 +52,11 @@ UCombatManager::UCombatManager()
 
 void UCombatManager::StartCombat()
 {
-	/*if (!Instance->GetWorld())
-	{
-		UE_LOG(LogTemp, Error, TEXT("Combat Manager: GetWorld failed"));
-		if (Instance->GetOuter())
-		{
-			UE_LOG(LogTemp, Error, TEXT("Combat Manager: %s"), *Instance->GetOuter()->GetName());
-
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Combat Manager: No Outer"));
-		}
-		return;
-	}*/
-
+	UE_LOG(LogTemp, Log, TEXT("START COMBAT"));
 	Instance->bPreCombat = false;
 	ACameraPawn::Instance->RevealMap();
 
 	TArray<AActor*> temp;
-	UE_LOG(LogTemp, Log, TEXT("Combat Manager: Sanity Check 1"));
 	//UGameplayStatics::GetAllActorsOfClass(Instance->GetWorld(), AGTAIController::StaticClass(), temp);
 	UGameplayStatics::GetAllActorsOfClass(GEngine->GameViewport->GetWorld(), AGTCharacter::StaticClass(), temp);
 	if (temp.Num() == 0)
@@ -80,6 +67,8 @@ void UCombatManager::StartCombat()
 	//UE_LOG(LogTemp, Log, TEXT("temp.Num() = %d"), temp.Num());
 	//UE_LOG(LogTemp, Log, TEXT("iQueue.Num() = %d"), Instance->InitiativeQueue.Num());
 	Instance->InitiativeQueue.Empty(temp.Num());
+	Instance->EnemyCharacters.Empty();
+	Instance->PartyCharacters.Empty();
 	for (int i = 0; i < temp.Num(); i++)
 	{
 		bool bInserted = false;
@@ -97,9 +86,15 @@ void UCombatManager::StartCombat()
 			Instance->InitiativeQueue.Add(gtc);
 
 		if (gtc->ActorHasTag(FName("Party")))
+		{
 			Instance->PartyCharacters.Add(gtc);
+			UE_LOG(LogTemp, Log, TEXT("%s added to PartyCharacters"), *gtc->GetName());
+		}
 		else
+		{
 			Instance->EnemyCharacters.Add(gtc); //TODO: ally characters would need separate array
+			UE_LOG(LogTemp, Log, TEXT("%s added to EnemyCharacters"), *gtc->GetName());
+		}
 	}
 
 	Instance->InitiativeQueue[0]->BeginTurn();
@@ -331,5 +326,58 @@ bool UCombatManager::RollAttack(class UActionAttack* action, class AGTCharacter*
 	{
 		UE_LOG(LogTemp, Error, TEXT("No CombatManager"));
 		return true;
+	}
+}
+
+void UCombatManager::ResetDetection(class AGTCharacter* mover)
+{
+	Instance->AwareEnemies.Empty();
+	//UnawareEnemies.Empty();
+
+	if (mover->IsPartyCharacter())
+	{
+		//TODO: sneak/unaware
+		for (int i = 0; i < Instance->EnemyCharacters.Num(); i++)
+		{
+			Instance->AwareEnemies.Add(Instance->EnemyCharacters[i]);
+		}
+	}
+	else
+	{
+		//TODO: sneak/unaware
+		for (int i = 0; i < Instance->PartyCharacters.Num(); i++)
+		{
+			Instance->AwareEnemies.Add(Instance->PartyCharacters[i]);
+		}
+	}
+
+	CheckDetection(mover);
+}
+
+void UCombatManager::CheckDetection(class AGTCharacter* mover)
+{
+	if (ANavGrid::Instance == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("CheckDetection: No Nav Grid"));
+		return;
+	}
+	//TODO: unaware
+
+	for (int i = 0; i < Instance->AwareEnemies.Num(); i++)
+	{
+		if (Instance->AwareEnemies[i] == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("CheckDetection: AwareEnemies[%d] is null"), i);
+			continue;
+		}
+		if (Instance->AwareEnemies[i]->Stats == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("CheckDetection: AwareEnemies[%d] has no stats"), i);
+			continue;
+		}
+		if (ANavGrid::Instance->GetDistance(mover->GetActorLocation() - Instance->AwareEnemies[i]->GetActorLocation()) < Instance->AwareEnemies[i]->Stats->DetectionRadius + .5) //.5 for rounding
+		{
+			Instance->AwareEnemies[i]->TurnToFace(mover->GetActorLocation());
+		}
 	}
 }

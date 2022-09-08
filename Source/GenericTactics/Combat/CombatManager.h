@@ -58,6 +58,9 @@ protected:
 
 	//FTimerHandle InterruptHandle;
 
+	//enemies of acting character, not of player
+	TArray<class AGTCharacter*> AwareEnemies;
+
 	//DO I STILL NEED THIS?
 	void AdvanceActionQueue();
 
@@ -128,4 +131,8 @@ public:
 	static void UpdateAreaOfEffect(FVector source, FVector target);
 
 	static bool RollAttack(class UActionAttack* action, class AGTCharacter* attacker, TScriptInterface<ITargetableInterface> target);
+
+	static void ResetDetection(class AGTCharacter* mover);
+
+	static void CheckDetection(class AGTCharacter* mover);
 };

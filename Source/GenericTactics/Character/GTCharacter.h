@@ -136,6 +136,8 @@ private:
 	TArray<FMovementStep> MoveSteps;
 
 	void FinishedMoving();
+	/** called on entering each step/tile of movement */
+	void OnMoveStep();
 
 	const FNodeData* FindMoveData(FVector vec) const;
 
@@ -159,6 +161,9 @@ public:
 	 @param range Desired distance from target */
 	UFUNCTION(BlueprintPure, Category = "Tactics")
 		FNodeData NearestReachableLocationToTarget(FVector target, float range);
+
+	UFUNCTION(BlueprintCallable)
+		void TurnToFace(FVector target);
 
 
 

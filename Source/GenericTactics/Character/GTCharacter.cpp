@@ -5,7 +5,7 @@
 #include "GTAIController.h"
 #include "StatsBlock.h"
 #include "../Combat/Action.h"
-//#include "../Combat/CombatManager.h"
+#include "../Combat/CombatManager.h"
 //#include "../Movement/NavGrid.h"
 #include "../Player/CameraPawn.h"
 #include "../Player/GTPlayerController.h"
@@ -122,17 +122,7 @@ void AGTCharacter::Tick(float DeltaTime)
 			MoveTimePassed += DeltaTime * 400;
 			if (MoveTimePassed >= MoveSteps[0].TimeToArrival)
 			{
-				if (MoveSteps.Num() == 1)
-				{
-					bIsMoving = false;
-					SetActorLocation(MoveSteps[0].CalcPosition(MoveSteps[0].TimeToArrival));
-					FinishedMoving();
-					return;
-					//DONE
-				}
-				MoveTimePassed -= MoveSteps[0].TimeToArrival;
-				MoveSteps.RemoveAt(0);
-				SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
+				OnMoveStep();
 			}
 
 			SetActorLocation(MoveSteps[0].CalcPosition(MoveTimePassed));
@@ -304,6 +294,24 @@ void AGTCharacter::FinishedMoving()
 		CompleteAction();
 }
 
+void AGTCharacter::OnMoveStep()
+{
+	UCombatManager::CheckDetection(this);
+	if (MoveSteps.Num() == 1) //done
+	{
+		bIsMoving = false;
+		SetActorLocation(MoveSteps[0].CalcPosition(MoveSteps[0].TimeToArrival));
+		FinishedMoving();
+		return;
+	}
+	else
+	{
+		MoveTimePassed -= MoveSteps[0].TimeToArrival;
+		MoveSteps.RemoveAt(0);
+		SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
+	}
+}
+
 const FNodeData* AGTCharacter::FindMoveData(FVector vec) const
 {
 	for (int i = 0; i < MoveGrid.Num(); i++)
@@ -443,6 +451,20 @@ FNodeData AGTCharacter::NearestReachableLocationToTarget(FVector target, float r
 }
 
 
+
+void AGTCharacter::TurnToFace(FVector target)
+{
+	//FVector direction = (target - GetActorLocation()) * FVector(1, 1, 0);
+
+	//align character to axes or diagonals
+	float ang = FMath::Atan2((target - GetActorLocation()).Y, (target - GetActorLocation()).X);
+	ang = FMath::Floor(ang / PI * 4 + .5f) * (PI / 4);
+
+	SetActorRotation(FVector(FMath::Cos(ang), FMath::Sin(ang), 0).ToOrientationRotator());
+	//might not be needed because of Tick
+	/*UpdateFacing();
+	UGTBFL::FaceCamera(this, GetSprite());*/
+}
 
 //ACTIONS
 void AGTCharacter::StartAction()
@@ -627,6 +649,7 @@ void AGTCharacter::BeginTurn_Implementation()
 	ANavGrid::MoveDataID++;
 	ACameraPawn::Instance->SetActorLocation(GetActorLocation());
 	UGTHUDCode::Instance->ShowCharacterInfo(this);
+	UCombatManager::ResetDetection(this);
 
 	if(IsPartyCharacter())
 	{

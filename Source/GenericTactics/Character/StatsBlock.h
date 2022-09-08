@@ -30,6 +30,8 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		TMap<EDamageType, int32> Resist;
 
+	int32 DetectionRadius = 2;
+
 	UStatsBlock(const FObjectInitializer& ObjectInitializer);
 
 	void FillFromData(class UCharacterDataAsset* data);
