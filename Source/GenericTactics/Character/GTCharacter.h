@@ -169,15 +169,21 @@ public:
 
 	//ACTIONS
 private:
+
 	void StartAction();
 
 public:
 	UPROPERTY(BlueprintReadOnly)
-	struct FActionData ActionInProgress;
+		struct FActionData ActionInProgress;
+
+	/** If action uses a projectile, action should complete based on projectile, not animation */
+	UPROPERTY(BlueprintReadOnly)
+		bool bWaitingOnProjectile = false;
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
 		EActionAnim GetActionAnim();
 
+	/** Performs action immediately (assumes actor is already within range) */
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 		void PerformAction(FActionData actionData);
 
@@ -190,8 +196,13 @@ public:
 	/*UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
 		void PlayActionAnim(EActionAnim anim);*/
 
+	/** Move into range to perform action, or perform if already in range */
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 		void QueueAction(FNavPath path, FActionData actionData);
+
+	/** Fires projectile IF ActionInProgress has one */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		void FireProjectile();
 
 
 

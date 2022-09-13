@@ -6,6 +6,7 @@
 #include "StatsBlock.h"
 #include "../Combat/Action.h"
 #include "../Combat/CombatManager.h"
+#include "../Combat/Projectile.h"
 //#include "../Movement/NavGrid.h"
 #include "../Player/CameraPawn.h"
 #include "../Player/GTPlayerController.h"
@@ -124,8 +125,8 @@ void AGTCharacter::Tick(float DeltaTime)
 			{
 				OnMoveStep();
 			}
-
-			SetActorLocation(MoveSteps[0].CalcPosition(MoveTimePassed));
+			else
+				SetActorLocation(MoveSteps[0].CalcPosition(MoveTimePassed));
 		}
 	}
 
@@ -308,6 +309,7 @@ void AGTCharacter::OnMoveStep()
 	{
 		MoveTimePassed -= MoveSteps[0].TimeToArrival;
 		MoveSteps.RemoveAt(0);
+		SetActorLocation(MoveSteps[0].CalcPosition(MoveTimePassed));
 		SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
 	}
 }
@@ -472,6 +474,9 @@ void AGTCharacter::StartAction()
 	if(!ActionInProgress.Action) return;
 	UE_LOG(LogTemp, Log, TEXT("Starting %s"), *ActionInProgress.Action->Name.ToString());
 
+	//making sure this is not still set. Will be set when the projectile is fired
+	bWaitingOnProjectile = false;
+
 	SetActorRotation(((ActionInProgress.Location - GetActorLocation()) * FVector(1, 1, 0)).ToOrientationRotator());
 	//PlayActionAnim(ActionInProgress.Action->Anim);
 	GetAnimInstance()->JumpToNode(TEXT("Action"));
@@ -507,14 +512,27 @@ void AGTCharacter::PerformAction(FActionData actionData)
 
 void AGTCharacter::ResolveAction()
 {
+	UE_LOG(LogTemp, Log, TEXT("Resolving %s"), *ActionInProgress.Action->Name.ToString());
 	if (ActionInProgress.Action)
+	{
 		ActionInProgress.Action->Resolve(this, ActionInProgress.Location);
+		if (bWaitingOnProjectile)
+		{
+			bWaitingOnProjectile = false;
+			CompleteAction();
+		}
+	}
 	else
 		CompleteAction();
 }
 
 void AGTCharacter::CompleteAction()
 {
+	if(bWaitingOnProjectile) return;
+
+	if(ActionInProgress.Action)
+		UE_LOG(LogTemp, Log, TEXT("Completing %s"), *ActionInProgress.Action->Name.ToString());
+
 	ActionInProgress.Action = nullptr;
 
 	if (IsPartyCharacter())
@@ -577,6 +595,19 @@ void AGTCharacter::QueueAction(FNavPath path, FActionData actionData)
 	StartMoving(path);
 	ActionInProgress = actionData;
 }
+
+void AGTCharacter::FireProjectile()
+{
+	if (ActionInProgress.Action && ActionInProgress.Action->ProjectileClass)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Firing Projectile"));
+		bWaitingOnProjectile = true;
+		FTransform t = GetSprite()->GetSocketTransform(WeaponSocketName);
+		AProjectile* projectile = Cast<AProjectile>(GetWorld()->SpawnActor(ActionInProgress.Action->ProjectileClass, &t));
+		projectile->Init(ActionInProgress.Action, this, ActionInProgress.Location);
+	}
+}
+
 
 
 

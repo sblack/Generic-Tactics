@@ -45,7 +45,7 @@ UENUM(BlueprintType)
 enum class EActionAnim : uint8
 {
 	Attack,
-	Cast,
+	RaiseAttack,
 	Block,
 	Crouch
 };

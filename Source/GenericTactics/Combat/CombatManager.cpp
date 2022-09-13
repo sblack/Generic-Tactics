@@ -356,25 +356,10 @@ void UCombatManager::ResetDetection(class AGTCharacter* mover)
 
 void UCombatManager::CheckDetection(class AGTCharacter* mover)
 {
-	if (ANavGrid::Instance == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("CheckDetection: No Nav Grid"));
-		return;
-	}
 	//TODO: unaware
 
 	for (int i = 0; i < Instance->AwareEnemies.Num(); i++)
 	{
-		if (Instance->AwareEnemies[i] == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("CheckDetection: AwareEnemies[%d] is null"), i);
-			continue;
-		}
-		if (Instance->AwareEnemies[i]->Stats == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("CheckDetection: AwareEnemies[%d] has no stats"), i);
-			continue;
-		}
 		if (ANavGrid::Instance->GetDistance(mover->GetActorLocation() - Instance->AwareEnemies[i]->GetActorLocation()) < Instance->AwareEnemies[i]->Stats->DetectionRadius + .5) //.5 for rounding
 		{
 			Instance->AwareEnemies[i]->TurnToFace(mover->GetActorLocation());

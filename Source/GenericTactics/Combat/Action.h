@@ -50,6 +50,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		TMap<FName, class USoundBase*> Sounds;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		TSubclassOf<class AProjectile> ProjectileClass;
+
 	UAction();
 
 	UFUNCTION(BlueprintPure, Category = "Action")

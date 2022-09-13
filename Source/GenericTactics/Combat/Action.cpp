@@ -47,6 +47,8 @@ EActionUsable UAction::CanUseTarget(class AGTCharacter* user, FVector target)
 void UAction::Resolve(class AGTCharacter* user, FVector target)
 {
 	if (!user) return;
+
+	UE_LOG(LogTemp, Log, TEXT("Resolving %s at %s"), *Name.ToString(), *target.ToString());
 }
 
 TArray<FVector> UAction::GetAffectedArea(class AGTCharacter* source, FVector target)
