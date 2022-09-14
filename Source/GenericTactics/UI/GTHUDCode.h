@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 		class URichTextBlock* CombatLog;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class UInitiativeTrackCode* InitiativeTrack;
+
 	virtual void NativeConstruct() override;
 
 	virtual void NativeDestruct() override;
@@ -36,6 +39,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "UI|HUD")
 		static UGTHUDCode* GetTacticsHUD() { return Instance; }
+
+	UFUNCTION(BlueprintPure, Category = "UI|HUD")
+		class UInitiativeTrackCode* GetInitiativeTrack() { return InitiativeTrack; }
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "UI|HUD")
 		void ShowCharacterInfo(class AGTCharacter* character);

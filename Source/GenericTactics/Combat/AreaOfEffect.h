@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "../Utility/ActionSourceInterface.h"
 #include "AreaOfEffect.generated.h"
 
 /**
@@ -16,5 +17,5 @@ class GENERICTACTICS_API UAreaOfEffect : public UObject
 public:
 	/** Gets all squares in AoE, */
 	UFUNCTION(BlueprintImplementableEvent)
-		TArray<FVector> GetTargetedSquares(class AGTCharacter* source, FVector center);
+		TArray<FVector> GetTargetedSquares(const TScriptInterface<IActionSourceInterface>& source, FVector center);
 };

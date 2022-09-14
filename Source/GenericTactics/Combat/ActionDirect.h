@@ -17,6 +17,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced)
 		class UAreaOfEffect* Area;
 
-	TArray<FVector> GetAffectedArea(class AGTCharacter* source, FVector target) override;
+	TArray<FVector> GetAffectedArea(IActionSource source, FVector target) override;
 
 };

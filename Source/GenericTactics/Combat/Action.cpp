@@ -36,22 +36,14 @@ EActionUsable UAction::CanUseTarget(class AGTCharacter* user, FVector target)
 	return EActionUsable::Usable;
 }
 
-//void UAction::Perform(class AGTCharacter* user, FVector target)
-//{
-//	if (!user) return;
-//
-//	user->SetActorRotation(((target - user->GetActorLocation()) * FVector(1, 1, 0)).ToOrientationRotator());
-//	user->PlayActionAnim(Anim);
-//}
-
-void UAction::Resolve(class AGTCharacter* user, FVector target)
+void UAction::Resolve(IActionSource source, FVector target)
 {
-	if (!user) return;
+	if (!source) return;
 
 	UE_LOG(LogTemp, Log, TEXT("Resolving %s at %s"), *Name.ToString(), *target.ToString());
 }
 
-TArray<FVector> UAction::GetAffectedArea(class AGTCharacter* source, FVector target)
+TArray<FVector> UAction::GetAffectedArea(IActionSource source, FVector target)
 {
 	TArray<FVector> result;
 	result.Add(target);

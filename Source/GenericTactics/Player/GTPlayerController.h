@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "../Utility/ActionSourceInterface.h"
 #include "../Utility/TargetableInterface.h"
 #include "GTPlayerController.generated.h"
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "../Utility/ActionSourceInterface.h"
 #include "../Utility/TargetableInterface.h"
 #include "CombatManager.generated.h"
 
@@ -38,7 +39,7 @@ protected:
 	static UCombatManager* Instance;
 
 	UPROPERTY(BlueprintReadWrite)
-		TArray<class AGTCharacter*> InitiativeQueue;
+		TArray<TScriptInterface<IActionSourceInterface>> InitiativeQueue;
 
 	UPROPERTY(EditDefaultsOnly, Instanced)
 		class UActionAttack* DefaultAttack;
@@ -96,22 +97,17 @@ public:
 		static void AdvanceInitiative();
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
-		static class AGTCharacter* ActingCharacter();
-
-	UFUNCTION(BlueprintPure, Category = "Combat")
 		static class UActionAttack* GetDefaultAttack() { return Instance->DefaultAttack; }
 
 	//DO I STILL NEED THIS?
-	UFUNCTION(BlueprintCallable, Category = "Combat")
+	UFUNCTION(BlueprintCallable, Category = "Combat", meta = (DeprecatedFunction))
 		static void InitiateActionTarget(class UAction* action, class AGTCharacter* attacker, TScriptInterface<ITargetableInterface> target);
 
 		//DO I STILL NEED THIS?
-	UFUNCTION(BlueprintCallable, Category = "Combat")
+	UFUNCTION(BlueprintCallable, Category = "Combat", meta = (DeprecatedFunction))
 		static void InitiateActionLocation(class UAction* action, class AGTCharacter* attacker, FVector location);
 
 	static void InitiatePreparedAction(class AGTCharacter* attacker);
-
-	static void CompleteAction();
 
 	//UFUNCTION(BlueprintCallable, Category = "Combat")
 	//	static void InterruptAction();
@@ -130,9 +126,12 @@ public:
 
 	static void UpdateAreaOfEffect(FVector source, FVector target);
 
-	static bool RollAttack(class UActionAttack* action, class AGTCharacter* attacker, TScriptInterface<ITargetableInterface> target);
+	static bool RollAttack(class UActionAttack* action, TScriptInterface<IActionSourceInterface> source, TScriptInterface<ITargetableInterface> target);
 
 	static void ResetDetection(class AGTCharacter* mover);
 
 	static void CheckDetection(class AGTCharacter* mover);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		static void EndCurrentTurn();
 };

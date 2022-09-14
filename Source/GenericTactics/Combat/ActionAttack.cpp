@@ -5,19 +5,19 @@
 #include "CombatManager.h"
 #include "../Movement/NavGrid.h"
 
-void UActionAttack::Resolve(class AGTCharacter* user, FVector target)
+void UActionAttack::Resolve(TScriptInterface<IActionSourceInterface> source, FVector target)
 {
-	Super::Resolve(user, target);
+	Super::Resolve(source, target);
 
-	TArray<FVector> targetArea = GetAffectedArea(user, target);
+	TArray<FVector> targetArea = GetAffectedArea(source, target);
 
 	for (int i = 0; i < targetArea.Num(); i++)
 	{
 		FGridData data = ANavGrid::Instance->GetGridData(targetArea[i]);
 		//TODO: team/object check
-		if (data.Occupant && data.Occupant != user)
+		if (data.Occupant && data.Occupant->AsActor() != source->AsActor())
 		{
-			if(UCombatManager::RollAttack(this, user, data.Occupant))
+			if (UCombatManager::RollAttack(this, source, data.Occupant))
 			{
 				data.Occupant->OnHit(false);
 			}

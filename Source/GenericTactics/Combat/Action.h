@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "../Utility/GTBFL.h"
+#include "../Utility/ActionSourceInterface.h"
 #include "../Utility/TargetableInterface.h"
 #include "Action.generated.h"
 
@@ -55,12 +56,10 @@ public:
 
 	UAction();
 
-	UFUNCTION(BlueprintPure, Category = "Action")
+	UFUNCTION(BlueprintPure, Category = "Action", meta = (DeprecatedFunction))
 		virtual EActionUsable CanUseTarget(class AGTCharacter* user, FVector target);
-	
-	//virtual void Perform(class AGTCharacter* user, FVector target);
 
-	virtual void Resolve(class AGTCharacter* user, FVector target);
+	virtual void Resolve(IActionSource source, FVector target);
 
-	virtual TArray<FVector> GetAffectedArea(class AGTCharacter* source, FVector target);
+	virtual TArray<FVector> GetAffectedArea(IActionSource source, FVector target);
 };

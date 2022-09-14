@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "NavRegion.h"
+#include "../Utility/ActionSourceInterface.h"
 #include "../Utility/TargetableInterface.h"
 #include "NavGrid.generated.h"
 
@@ -226,5 +227,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Tactics")
 		void ShowTargeting(FVector source, float range);
 
-	void ShowTargetingArea(class AGTCharacter* source, FVector target, class UAction* action);
+	void ShowTargetingArea(IActionSource source, FVector target, class UAction* action);
 };

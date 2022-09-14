@@ -667,11 +667,11 @@ void ANavGrid::ShowTargeting(FVector source, float range)
 	}
 }
 
-void ANavGrid::ShowTargetingArea(class AGTCharacter* source, FVector target, class UAction* action)
+void ANavGrid::ShowTargetingArea(IActionSource source, FVector target, class UAction* action)
 {
 	ShowMoveRange(nullptr);
 
-	TArray<FVector> targetable = GetWithinDistance(source->GetActorLocation(), action->Range);
+	TArray<FVector> targetable = GetWithinDistance(source->GetLocation(), action->Range);
 	bool bValidTarget = false;
 	for (int i = 0; i < targetable.Num(); i++)
 	{

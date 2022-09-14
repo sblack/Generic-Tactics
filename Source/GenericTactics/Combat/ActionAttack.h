@@ -17,5 +17,5 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		EAttackType AttackType;
 
-	virtual void Resolve(class AGTCharacter* user, FVector target) override;
+	virtual void Resolve(TScriptInterface<IActionSourceInterface> source, FVector target) override;
 };

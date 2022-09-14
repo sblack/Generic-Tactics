@@ -7,6 +7,7 @@
 #include "../Combat/CombatManager.h"
 #include "../Movement/NavGrid.h"
 #include "../Utility/GTBFL.h"
+#include "../Utility/ActionSourceInterface.h"
 #include "../Utility/TargetableInterface.h"
 #include "CharacterDataAsset.h"
 #include "GTCharacter.generated.h"
@@ -26,7 +27,7 @@ struct FMovementStep
  * 
  */
 UCLASS(ABSTRACT)
-class GENERICTACTICS_API AGTCharacter : public APaperZDCharacter, public ITargetableInterface
+class GENERICTACTICS_API AGTCharacter : public APaperZDCharacter, public ITargetableInterface, public IActionSourceInterface
 {
 	GENERATED_BODY()
 //INHERITED
@@ -223,6 +224,8 @@ public:
 
 protected:
 
+	UPROPERTY(BlueprintReadOnly)
+		float Initiative = -1;
 
 	void BeginTurn_Implementation();
 
@@ -260,8 +263,7 @@ public:
 	//UFUNCTION(BlueprintPure, Category = "Combat")
 	//	EActionAnim GetActionAnim();
 
-	UPROPERTY(BlueprintReadOnly)
-		float Initiative = -1;
+	float GetInitiative() override { return Initiative; }
 
 	UPROPERTY(BlueprintReadOnly)
 		bool bIsMyTurn;

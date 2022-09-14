@@ -12,6 +12,7 @@
 #include "../Player/CameraPawn.h"
 //#include "../Player/GTPlayerController.h"
 #include "../UI/GTHUDCode.h"
+#include "../UI/InitiativeTrackCode.h"
 #include "PaperFlipbookComponent.h"
 //#include "Action.h"
 #include "ActionAttack.h"
@@ -57,7 +58,6 @@ void UCombatManager::StartCombat()
 	ACameraPawn::Instance->RevealMap();
 
 	TArray<AActor*> temp;
-	//UGameplayStatics::GetAllActorsOfClass(Instance->GetWorld(), AGTAIController::StaticClass(), temp);
 	UGameplayStatics::GetAllActorsOfClass(GEngine->GameViewport->GetWorld(), AGTCharacter::StaticClass(), temp);
 	if (temp.Num() == 0)
 	{
@@ -75,7 +75,7 @@ void UCombatManager::StartCombat()
 		AGTCharacter* gtc = Cast<AGTCharacter>(temp[i]);
 		for (int j = 0; j < Instance->InitiativeQueue.Num(); j++)
 		{
-			if (gtc->Initiative > Instance->InitiativeQueue[j]->Initiative)
+			if (gtc->GetInitiative() > Instance->InitiativeQueue[j]->GetInitiative())
 			{
 				Instance->InitiativeQueue.Insert(gtc, j);
 				bInserted = true;
@@ -95,6 +95,11 @@ void UCombatManager::StartCombat()
 			Instance->EnemyCharacters.Add(gtc); //TODO: ally characters would need separate array
 			UE_LOG(LogTemp, Log, TEXT("%s added to EnemyCharacters"), *gtc->GetName());
 		}
+	}
+
+	for (int i = 0; i < Instance->InitiativeQueue.Num(); i++)
+	{
+		UGTHUDCode::Instance->GetInitiativeTrack()->AddMarker(Instance->InitiativeQueue[i]);
 	}
 
 	Instance->InitiativeQueue[0]->BeginTurn();
@@ -120,12 +125,8 @@ void UCombatManager::AdvanceInitiative()
 		Instance->InitiativeIndex = 0;
 	}
 
+	UGTHUDCode::Instance->GetInitiativeTrack()->AdvanceInitiative();
 	Instance->InitiativeQueue[Instance->InitiativeIndex]->BeginTurn();
-}
-
-class AGTCharacter* UCombatManager::ActingCharacter()
-{
-	return Instance->InitiativeQueue[Instance->InitiativeIndex];
 }
 
 void UCombatManager::InitiateActionTarget(class UAction* action, class AGTCharacter* attacker, TScriptInterface<ITargetableInterface> target)
@@ -202,53 +203,6 @@ void UCombatManager::InitiatePreparedAction(class AGTCharacter* attacker)
 	InitiateActionLocation(Instance->PreppedAction, attacker, Instance->PreppedTarget);
 }
 
-void UCombatManager::CompleteAction()
-{
-	//if (Instance->bInterrupting)
-	//{
-	//	//TODO: check if attacker is still alive
-
-	//	if (Instance->InterruptQueue.Num() > 0)
-	//	{
-	//		//TODO: check if attack is still valid target for interrupt
-
-	//		FActionData interrupt = Instance->InterruptQueue[0];
-	//		Instance->InterruptQueue.RemoveAt(0);
-
-	//		interrupt.Action->Perform(interrupt.Actor, interrupt.RelativeLocation);
-	//		UTacticsHUDCode::Instance->ShowAttackText(NSLOCTEXT("Combat", "UIInterrupt", "Interrupt!"));
-	//	}
-	//	else
-	//	{
-	//		Instance->bInterrupting = false;
-	//		ActingController()->GetTacticsCharacter()->GetSprite()->SetPlayRate(1);
-	//	}
-
-	//	return;
-	//}
-
-	/*if (Instance->ReactionQueue.Num() > 0)
-	{
-		UE_LOG(LogTemp, Log, TEXT("React!"));
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("React!"));
-
-		FActionData reaction = Instance->ReactionQueue[0];
-		Instance->ReactionQueue.RemoveAt(0);
-
-		reaction.Action->Perform(reaction.Actor, reaction.RelativeLocation);
-
-		UTacticsHUDCode::Instance->ShowAttackText(NSLOCTEXT("Combat", "UIReaction", "Reaction!"));
-
-		return;
-	}*/
-
-	//TODO: perform reactions
-
-	Instance->bPerformingActions = false;
-	if (ActingCharacter()->CurrentAP < 1) //TODO: replace 1 with minAP?
-		ActingCharacter()->EndTurn();
-}
-
 //void UCombatManager::InterruptAction()
 //{
 //	UTacticsHUDCode::Instance->ClearAttackText();
@@ -315,12 +269,12 @@ void UCombatManager::UpdateAreaOfEffect(FVector source, FVector target)
 	ANavGrid::Instance->ShowTargeting(source, Instance->PreppedAction->MaxRange);*/
 }
 
-bool UCombatManager::RollAttack(class UActionAttack* action, class AGTCharacter* attacker, TScriptInterface<ITargetableInterface> target)
+bool UCombatManager::RollAttack(class UActionAttack* action, TScriptInterface<IActionSourceInterface> source, TScriptInterface<ITargetableInterface> target)
 {
 	if (Instance)
 	{
 		//TODO: more in-depth calculations (eg acc bonus based on target, def bonus based on attacker, etc)
-		return Instance->AttackRoll(attacker->GetAccuracy(action->AttackType), target->GetDefense(action->AttackType));
+		return Instance->AttackRoll(source->GetAccuracy(action->AttackType), target->GetDefense(action->AttackType));
 	}
 	else
 	{
@@ -365,4 +319,9 @@ void UCombatManager::CheckDetection(class AGTCharacter* mover)
 			Instance->AwareEnemies[i]->TurnToFace(mover->GetActorLocation());
 		}
 	}
+}
+
+void UCombatManager::EndCurrentTurn()
+{
+	Instance->InitiativeQueue[Instance->InitiativeIndex]->EndTurn();
 }

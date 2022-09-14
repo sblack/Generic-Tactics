@@ -4,7 +4,7 @@
 #include "ActionDirect.h"
 #include "AreaOfEffect.h"
 
-TArray<FVector> UActionDirect::GetAffectedArea(class AGTCharacter* source, FVector target)
+TArray<FVector> UActionDirect::GetAffectedArea(IActionSource source, FVector target)
 {
 	if (Area)
 		return Area->GetTargetedSquares(source, target);
