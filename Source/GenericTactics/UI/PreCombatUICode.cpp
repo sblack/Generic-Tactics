@@ -96,15 +96,31 @@ void UPreCombatUICode::ClickLocation_Implementation(FVector location)
 
 void UPreCombatUICode::HoverVoid_Implementation()
 {
-
+	ValidText->SetText(FText::FromString(TEXT("NOT VALID")));
+	if(FakeCharActor)
+		FakeCharActor->SetActorHiddenInGame(true);
 }
 
 void UPreCombatUICode::HoverCharacter_Implementation(class AGTCharacter* character)
 {
-
+	if (SelectedButton)
+	{
+		ValidText->SetText(FText::FromString(TEXT("NOT VALID")));
+		if (FakeCharActor)
+			FakeCharActor->SetActorHiddenInGame(true);
+	}
+	else
+	{
+		//TODO
+	}
 }
 
 void UPreCombatUICode::HoverLocation_Implementation(FVector location)
 {
-
+	if (SelectedButton)
+	{
+		FakeCharActor->SetActorLocation(location);
+		FakeCharActor->SetActorHiddenInGame(false);
+		ValidText->SetText(FText::FromString(TEXT("Valid")));
+	}
 }

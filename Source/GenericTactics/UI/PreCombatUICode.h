@@ -23,6 +23,9 @@ protected:
 	UPROPERTY(BlueprintReadWrite)
 		class UCharacterButtonCode* SelectedButton;
 
+	UPROPERTY(BlueprintReadOnly)
+		TArray<class UCharacterButtonCode*> PartyButtons;
+
 	/** in-play Character of SelectedButton */
 	UPROPERTY(BlueprintReadWrite)
 		class AGTCharacter* PlacedCharacter;
@@ -38,6 +41,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 		class UButton* StartButton;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class UTextBlock* ValidText;
 
 	virtual void NativeConstruct() override;
 
