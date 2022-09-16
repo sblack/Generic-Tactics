@@ -9,7 +9,6 @@
 #include "../Character/GTCharacter.h"
 #include "../Character/GTAIPlayer.h"
 #include "../Combat/CombatManager.h"
-#include "../Movement/NavGrid.h"
 #include "../UI/GTHUDCode.h"
 #include "../UI/PreCombatUICode.h"
 //#include "../Utility/TacticsCheatManager.h"

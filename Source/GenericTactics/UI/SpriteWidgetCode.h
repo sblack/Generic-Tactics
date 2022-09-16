@@ -14,17 +14,34 @@ class GENERICTACTICS_API USpriteWidgetCode : public UUserWidget
 {
 	GENERATED_BODY()
 protected:
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 		class UMaterialInstanceDynamic* BodyDMI;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 		class UMaterialInstanceDynamic* HairDMI;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 		class UMaterialInstanceDynamic* HatFrontDMI;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 		class UMaterialInstanceDynamic* HatBackDMI;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class UImage* Body;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class UImage* Hair;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class UImage* HatFront;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class UImage* HatBack;
+
+	/*virtual void NativePreConstruct() override;
+
+	UFUNCTION(BlueprintCallable)
+		void InitMats();*/
 
 public:
 
@@ -33,4 +50,22 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 		void SetSkinColor(FLinearColor Value);
+
+	UFUNCTION(BlueprintCallable)
+		void SetHairColor(FLinearColor Value);
+
+	UFUNCTION(BlueprintCallable)
+		void SetHairIndex(uint8 Index);
+
+	UFUNCTION(BlueprintCallable)
+		void SetBodyType(class UTexture2D* Image);
+
+	UFUNCTION(BlueprintCallable)
+		void SetBodyColors(struct FColorQuartet Colors);
+
+	UFUNCTION(BlueprintCallable)
+		void SetHatType(uint8 Index, class UTexture2D* Image, class UTexture2D* ImageB);
+
+	UFUNCTION(BlueprintCallable)
+		void SetHatColors(struct FColorQuartet Colors);
 };

@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "../Utility/ActionSourceInterface.h"
 #include "../Utility/TargetableInterface.h"
+#include "../Movement/NavGrid.h"
 #include "GTPlayerController.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogGTPlayerController, Log, All);

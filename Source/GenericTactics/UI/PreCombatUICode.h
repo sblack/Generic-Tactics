@@ -14,9 +14,55 @@ class GENERICTACTICS_API UPreCombatUICode : public UUserWidget
 {
 	GENERATED_BODY()
 protected:
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<AActor> FakeCharacterClass;
+
+	UPROPERTY(BlueprintReadWrite)
+		class AActor* FakeCharActor;
+
+	UPROPERTY(BlueprintReadWrite)
+		class UCharacterButtonCode* SelectedButton;
+
+	/** in-play Character of SelectedButton */
+	UPROPERTY(BlueprintReadWrite)
+		class AGTCharacter* PlacedCharacter;
+
+	UPROPERTY(BlueprintReadWrite)
+		TArray<class AGTCharacter*> PlacedParty;
+
+	UPROPERTY(BlueprintReadWrite)
+		int32 Count;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class UTextBlock* PartyCount;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class UButton* StartButton;
+
 	virtual void NativeConstruct() override;
 
 	virtual void NativeDestruct() override;
+
+	void HoverLocation_Implementation(FVector location);
+
+	void HoverCharacter_Implementation(class AGTCharacter* character);
+
+	void HoverVoid_Implementation();
+
+	void ClickLocation_Implementation(FVector location);
+
+	void ClickCharacter_Implementation(class AGTCharacter* character);
+
+	void ClickVoid_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void CountChanged();
+
+	void CountChanged_Implementation();
+
+	///** deploy as many party members as possible, given limits of map */
+	//UFUNCTION(BlueprintCallable, Category = "PreCombat")
+	//	void AutoDeploy();
 
 public:
 	static UPreCombatUICode* Instance;
@@ -24,22 +70,22 @@ public:
 	UFUNCTION(BlueprintPure, Category = "PreCombat")
 		static UPreCombatUICode* GetPreCombatUI() { return Instance; }
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "PreCombat")
+	UFUNCTION(BlueprintNativeEvent, Category = "PreCombat")
 		void HoverLocation(FVector location);
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "PreCombat")
+	UFUNCTION(BlueprintNativeEvent, Category = "PreCombat")
 		void HoverCharacter(class AGTCharacter* character);
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "PreCombat")
+	UFUNCTION(BlueprintNativeEvent, Category = "PreCombat")
 		void HoverVoid();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "PreCombat")
+	UFUNCTION(BlueprintNativeEvent, Category = "PreCombat")
 		void ClickLocation(FVector location);
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "PreCombat")
+	UFUNCTION(BlueprintNativeEvent, Category = "PreCombat")
 		void ClickCharacter(class AGTCharacter* character);
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "PreCombat")
+	UFUNCTION(BlueprintNativeEvent, Category = "PreCombat")
 		void ClickVoid();
 	
 };
