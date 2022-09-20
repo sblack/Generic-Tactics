@@ -228,4 +228,6 @@ public:
 		void ShowTargeting(FVector source, float range);
 
 	void ShowTargetingArea(IActionSource source, FVector target, class UAction* action);
+
+	TArray<FGridData*> GetStartArea();
 };

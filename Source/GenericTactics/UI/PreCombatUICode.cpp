@@ -16,6 +16,20 @@ void UPreCombatUICode::NativeConstruct()
 
 	Instance = this;
 	UCombatManager::StartPreCombat();
+	if(ANavGrid::Instance)
+	{
+		StartArea = ANavGrid::Instance->GetStartArea();
+		if (StartArea.Num() < MaxCount)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Start Area is smaller than MaxCount; reducing MaxCount"));
+			MaxCount = StartArea.Num();
+			CountChanged();
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("NavGrid does not exist yet"));
+	}
 }
 
 void UPreCombatUICode::NativeDestruct()
@@ -29,8 +43,8 @@ void UPreCombatUICode::NativeDestruct()
 void UPreCombatUICode::CountChanged_Implementation()
 {
 	//TODO: get proper max party
-	PartyCount->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), Count, 16)));
-	if (Count == 0 || Count > 16)
+	PartyCount->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), Count, MaxCount)));
+	if (Count > 0 && Count <= MaxCount)
 	{
 		PartyCount->SetColorAndOpacity(FSlateColor(FLinearColor(1, 1, 1)));
 		StartButton->SetIsEnabled(true);
@@ -42,10 +56,69 @@ void UPreCombatUICode::CountChanged_Implementation()
 	}
 }
 
+void UPreCombatUICode::AutoDeploy()
+{
+	if (StartArea.Num() == 0)
+	{
+		if (ANavGrid::Instance)
+		{
+			StartArea = ANavGrid::Instance->GetStartArea();
+			if (StartArea.Num() < MaxCount)
+			{
+				UE_LOG(LogTemp, Log, TEXT("Start Area is smaller than MaxCount; reducing MaxCount"));
+				MaxCount = StartArea.Num();
+				CountChanged();
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("NavGrid still does not exist yet"));
+			return;
+		}
+	}
+
+	//already at or over max; nothing to do
+	if(Count >= MaxCount) return;
+
+	for (int i = 0; i < StartArea.Num(); i++)
+	{
+		if(StartArea[i]->Occupant) continue;
+
+		UCharacterButtonCode* toBePlaced = nullptr;
+		for (int j = 0; j < PartyButtons.Num(); j++)
+		{
+			if (!PartyButtons[j]->GetIsPlaced())
+			{
+				toBePlaced = PartyButtons[j];
+				break;
+			}
+		}
+		if (!toBePlaced)
+		{
+			//no unplaced characters; done
+			break;
+		}
+
+		AGTCharacter* toBeChar = SpawnCharacter(StartArea[i]->Location + FVector(0, 0, 80), toBePlaced->CharacterData);
+		if (toBeChar)
+		{
+			toBePlaced->Place(toBeChar);
+			PlacedParty.Add(toBeChar);
+			ANavGrid::AddActorToGrid(toBeChar);
+			Count++;
+
+			if(Count == MaxCount)
+				break;
+		}
+	}
+	CountChanged();
+}
+
 void UPreCombatUICode::ClickVoid_Implementation()
 {
-	if (PlacedCharacter)
+	if (PlacedCharacter) //if character selected and placed, remove character
 	{
+		ANavGrid::RemoveActorFromGrid(PlacedCharacter);
 		PlacedParty.Remove(PlacedCharacter);
 		SelectedButton->Unplace();
 		PlacedCharacter->Destroy();
@@ -70,24 +143,25 @@ void UPreCombatUICode::ClickLocation_Implementation(FVector location)
 	if (!SelectedButton || FakeCharActor->IsHidden())
 		return;
 
-	if (PlacedCharacter)
+	if (PlacedCharacter) //if selected character is already placed, move them
 	{
+		ANavGrid::RemoveActorFromGrid(PlacedCharacter);
 		PlacedCharacter->SetActorLocation(ANavGrid::Instance->AlignToGrid(location + FVector(0,0,80)));
 		SelectedButton->Place(PlacedCharacter);
+		ANavGrid::AddActorToGrid(PlacedCharacter);
 		PlacedCharacter = nullptr;
 	}
-	else
+	else //otherwise, spawn character
 	{
-		FTransform transform = FTransform(ANavGrid::Instance->AlignToGrid(location + FVector(0, 0, 80)));
-		PlacedCharacter = GetWorld()->SpawnActorDeferred<AGTCharacter>(AGTCharacter::StaticClass(), transform);
+		PlacedCharacter = SpawnCharacter(ANavGrid::Instance->AlignToGrid(location + FVector(0, 0, 80)), SelectedButton->CharacterData);
 		if(PlacedCharacter)
 		{
-			PlacedCharacter->CharacterData = SelectedButton->CharacterData;
-			UGameplayStatics::FinishSpawningActor(PlacedCharacter, transform);
 			SelectedButton->Place(PlacedCharacter);
 			PlacedParty.Add(PlacedCharacter);
+			ANavGrid::AddActorToGrid(PlacedCharacter);
 			Count++;
 			CountChanged();
+			PlacedCharacter = nullptr;
 		}
 	}
 	SelectedButton = nullptr;

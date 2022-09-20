@@ -36,6 +36,10 @@ protected:
 	UPROPERTY(BlueprintReadWrite)
 		int32 Count;
 
+	/** TODO: determine count from map */
+	UPROPERTY(BlueprintReadOnly)
+		int32 MaxCount = 16;
+
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 		class UTextBlock* PartyCount;
 
@@ -44,6 +48,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 		class UTextBlock* ValidText;
+
+	TArray<FGridData*> StartArea;
 
 	virtual void NativeConstruct() override;
 
@@ -66,9 +72,12 @@ protected:
 
 	void CountChanged_Implementation();
 
-	///** deploy as many party members as possible, given limits of map */
-	//UFUNCTION(BlueprintCallable, Category = "PreCombat")
-	//	void AutoDeploy();
+	UFUNCTION(BlueprintImplementableEvent)
+	class AGTCharacter* SpawnCharacter(FVector location, class UCharacterDataAsset* CharacterData);
+
+	/** deploy as many party members as possible, given limits of map */
+	UFUNCTION(BlueprintCallable, Category = "PreCombat")
+		void AutoDeploy();
 
 public:
 	static UPreCombatUICode* Instance;

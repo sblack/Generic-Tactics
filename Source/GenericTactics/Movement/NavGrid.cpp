@@ -688,6 +688,21 @@ void ANavGrid::ShowTargetingArea(IActionSource source, FVector target, class UAc
 	}
 }
 
+TArray<FGridData*> ANavGrid::GetStartArea()
+{
+	TArray<FGridData*> result;
+	for (int i = 0; i < 32; i++)
+	{
+		for (int j = 0; j < 32; j++)
+		{
+			if(Grid[i][j].RegionType == ERegionTypes::Start)
+				result.Add(&(Grid[i][j]));
+		}
+	}
+
+	return result;
+}
+
 bool FGridData::Blocked(class AGTCharacter* character)
 {
 	if (bStaticObstruction)

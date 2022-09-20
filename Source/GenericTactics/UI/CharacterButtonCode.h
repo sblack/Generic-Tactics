@@ -48,6 +48,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditInstanceOnly, meta = (ExposeOnSpawn))
 		class UCharacterDataAsset* CharacterData;
 
+	UFUNCTION(BlueprintPure)
+		bool GetIsPlaced() { return bIsPlaced;}
+
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 		void Select();
 
