@@ -9,6 +9,7 @@
 #include "../Utility/GTBFL.h"
 #include "../Utility/ActionSourceInterface.h"
 #include "../Utility/TargetableInterface.h"
+#include "../Utility/DirectionalSpriteInterface.h"
 #include "CharacterDataAsset.h"
 #include "GTCharacter.generated.h"
 
@@ -27,7 +28,7 @@ struct FMovementStep
  * 
  */
 UCLASS(ABSTRACT)
-class GENERICTACTICS_API AGTCharacter : public APaperZDCharacter, public ITargetableInterface, public IActionSourceInterface
+class GENERICTACTICS_API AGTCharacter : public APaperZDCharacter, public ITargetableInterface, public IActionSourceInterface, public IDirectionalSpriteInterface
 {
 	GENERATED_BODY()
 //INHERITED
@@ -56,9 +57,13 @@ public:
 
 	//virtual void PostLoad() override;
 
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 
-//SPRITES AND COSMETIC
+
+
+
+	//SPRITES AND COSMETIC
 private:
 	/** reference to the hair sprite component in child class */
 	class UPaperSpriteComponent* HairSprite;
@@ -97,9 +102,6 @@ private:
 	UFUNCTION(BlueprintCallable)
 		void ResetAttachments();
 
-	UFUNCTION(BlueprintCallable)
-		void UpdateFacing();
-
 	UFUNCTION()
 		void OnAnimSequenceUpdated(const class UPaperZDAnimSequence* From, const class UPaperZDAnimSequence* To, float CurrentProgress);
 
@@ -129,6 +131,11 @@ public:
 		/**SetSpriteColor for all sprite and flipbook components*/
 	UFUNCTION(BlueprintCallable)
 		void SetSpriteColor(FLinearColor color);
+
+	UFUNCTION(BlueprintCallable)
+		virtual void UpdateFacing() override;
+
+
 
 
 //MOVEMENT

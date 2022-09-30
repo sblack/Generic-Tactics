@@ -48,7 +48,7 @@ void AGTCharacter::BeginPlay()
 
 	CharacterName = CharacterData->Name;
 	InitMaterials();
-	UpdateFacing();
+	IDirectionalSpriteInterface::Sprites.Add(this);
 
 	Stats = NewObject<UStatsBlock>(this, TEXT("Stats"));
 	Stats->FillFromData(CharacterData);
@@ -129,14 +129,17 @@ void AGTCharacter::Tick(float DeltaTime)
 				SetActorLocation(MoveSteps[0].CalcPosition(MoveTimePassed));
 		}
 	}
-
-	UpdateFacing();
-	UGTBFL::FaceCamera(this, GetSprite());
 }
 
 void AGTCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void AGTCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	IDirectionalSpriteInterface::Sprites.Remove(this);
 }
 
 
@@ -242,6 +245,8 @@ void AGTCharacter::UpdateFacing()
 	HairSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
 	HatFrontSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
 	HatBackSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
+
+	UGTBFL::FaceCamera(this, GetSprite());
 }
 
 void AGTCharacter::OnAnimSequenceUpdated(const UPaperZDAnimSequence* From, const UPaperZDAnimSequence* To, float CurrentProgress)

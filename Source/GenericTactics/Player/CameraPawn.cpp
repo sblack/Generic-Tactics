@@ -2,8 +2,10 @@
 
 
 #include "CameraPawn.h"
+#include "../Utility/DirectionalSpriteInterface.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "TimerManager.h"
 
 ACameraPawn* ACameraPawn::Instance;
 
@@ -38,13 +40,52 @@ void ACameraPawn::BeginPlay()
 	CameraForward = TopDownCameraComponent->GetForwardVector() * FVector(1, 1, 0);
 	CameraForward.Normalize();
 	CameraRight = FVector(-CameraForward.Y, CameraForward.X, 0);
+
+	for (int i = 0; i < IDirectionalSpriteInterface::Sprites.Num(); i++)
+	{
+		if (IDirectionalSpriteInterface::Sprites[i] == nullptr)
+		{
+			IDirectionalSpriteInterface::Sprites.RemoveAt(i);
+			i--;
+		}
+	}
+
+	UpdateFacings();
+}
+
+void ACameraPawn::UpdateFacings()
+{
+	if (!bRotInit)
+	{
+		if(UGameplayStatics::GetPlayerCameraManager(this, 0)->GetCameraRotation().Equals(FRotator::ZeroRotator))
+		{
+			UE_LOG(LogTemp, Log, TEXT("camera rotation still wrong"));
+			GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ACameraPawn::UpdateFacings);
+			return; //no point in updating facings as rotation is wrong
+		}
+		else
+		{
+			bRotInit = true; //rotation is correct, proceed
+		}
+	}
+
+	for (int i = 0; i < IDirectionalSpriteInterface::Sprites.Num(); i++)
+	{
+		if (IDirectionalSpriteInterface::Sprites[i] == nullptr)
+		{
+			IDirectionalSpriteInterface::Sprites.RemoveAt(i);
+			i--;
+			UE_LOG(LogTemp, Log, TEXT("How did it make it this far?"));
+			continue;
+		}
+		IDirectionalSpriteInterface::Sprites[i]->UpdateFacing();
+	}
 }
 
 // Called every frame
 void ACameraPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -60,6 +101,7 @@ void ACameraPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		Instance = nullptr;
 
 	Super::EndPlay(EndPlayReason);
+	IDirectionalSpriteInterface::Sprites.Empty();
 }
 
 void ACameraPawn::MoveRight(float value)
@@ -69,6 +111,7 @@ void ACameraPawn::MoveRight(float value)
 
 	FVector vec = CameraRight * value * PanSpeed;
 	SetActorLocation(GetActorLocation() + vec, true);
+	UpdateFacings();
 }
 
 void ACameraPawn::MoveForward(float value)
@@ -78,6 +121,7 @@ void ACameraPawn::MoveForward(float value)
 
 	FVector vec = CameraForward * value * PanSpeed;
 	SetActorLocation(GetActorLocation() + vec, true);
+	UpdateFacings();
 }
 
 void ACameraPawn::ZoomIn(float value)
@@ -102,6 +146,7 @@ void ACameraPawn::RotateCamera(float value)
 	CameraForward = CameraForward.RotateAngleAxis(value, FVector::UpVector);
 	CameraRight = CameraRight.RotateAngleAxis(value, FVector::UpVector);
 	RootComponent->SetWorldRotation(CameraForward.Rotation());
+	UpdateFacings();
 }
 
 void ACameraPawn::AttachCamera(AActor* actor)
@@ -111,6 +156,7 @@ void ACameraPawn::AttachCamera(AActor* actor)
 		AttachToActor(actor, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		RootComponent->SetWorldRotation(CameraForward.Rotation());
 		bAttached = true;
+		UpdateFacings();
 	}
 	else
 	{

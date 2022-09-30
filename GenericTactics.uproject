@@ -14,7 +14,8 @@
 				"NavigationSystem",
 				"PaperZD",
 				"AIModule",
-				"CoreUObject"
+				"CoreUObject",
+				"Paper2D"
 			]
 		}
 	],

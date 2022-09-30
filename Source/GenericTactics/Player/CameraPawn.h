@@ -27,9 +27,14 @@ protected:
 
 	FRotator VerticalAngle = FRotator(-60, 0, 0);
 	bool bAttached;
+	
+	// the camera's rotation is 0 even at BeginPlay; set this true once the rotation is properly initialized
+	bool bRotInit = false;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	void UpdateFacings();
 
 public:
 	static ACameraPawn* Instance;
