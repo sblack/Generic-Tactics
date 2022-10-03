@@ -316,6 +316,8 @@ void AGTCharacter::OnMoveStep()
 		MoveSteps.RemoveAt(0);
 		SetActorLocation(MoveSteps[0].CalcPosition(MoveTimePassed));
 		SetActorRotation((MoveSteps[0].Velocity * FVector(1, 1, 0)).ToOrientationRotator());
+		UpdateFacing();
+		UGTBFL::FaceCamera(this, GetSprite());
 	}
 }
 
@@ -469,8 +471,8 @@ void AGTCharacter::TurnToFace(FVector target)
 
 	SetActorRotation(FVector(FMath::Cos(ang), FMath::Sin(ang), 0).ToOrientationRotator());
 	//might not be needed because of Tick
-	/*UpdateFacing();
-	UGTBFL::FaceCamera(this, GetSprite());*/
+	UpdateFacing();
+	UGTBFL::FaceCamera(this, GetSprite());
 }
 
 //ACTIONS
