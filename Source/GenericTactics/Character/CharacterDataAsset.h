@@ -60,6 +60,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<class UItemEquipment*> Accessories;*/
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		uint8 Level = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<class UFeat*> Feats;
+
 	FCharacterData();
 
 	FCharacterData(class UCharacterDataAsset* data, int32 _id);
@@ -123,6 +129,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Inventory")
 		TArray<class UItemEquipment*> Accessories;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		uint8 Level = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		TArray<class UFeat*> Feats;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "AI")
 		TArray<class UAIObjective*> AIObjectives;

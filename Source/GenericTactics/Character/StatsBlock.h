@@ -14,7 +14,12 @@ UCLASS(BlueprintType)
 class GENERICTACTICS_API UStatsBlock : public UObject
 {
 	GENERATED_BODY()
+private:
+
 public:
+	UPROPERTY(BlueprintReadWrite)
+		uint8 Level;
+
 	UPROPERTY(BlueprintReadWrite)
 		TMap<EVitals, int32> CurrentVitals;
 
@@ -38,4 +43,7 @@ public:
 
 	UFUNCTION(BlueprintPure)
 		float GetVitalRatio(EVitals vital);
+
+	UFUNCTION(BlueprintPure)
+		FString GetVitalRatioString(EVitals vital);
 };

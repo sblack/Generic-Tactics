@@ -3,6 +3,7 @@
 
 #include "CharacterDataAsset.h"
 #include "../GTGameInstance.h"
+#include "../Feats/Feat.h"
 #include "../Utility/GTBFL.h"
 
 UCharacterDataAsset* UCharacterDataAsset::FromSave(struct FCharacterData saveData)
@@ -25,6 +26,9 @@ UCharacterDataAsset* UCharacterDataAsset::FromSave(struct FCharacterData saveDat
 	result->Armor = saveData.Armor;
 	result->Accessories = saveData.Accessories;*/
 
+	result->Level = saveData.Level;
+	for (UFeat* feat : saveData.Feats)
+		result->Feats.Add(feat);
 
 	return result;
 }
@@ -183,6 +187,10 @@ FCharacterData::FCharacterData(class UCharacterDataAsset* data, int32 _id)
 	Shield = data->Shield;
 	Armor = data->Armor;
 	Accessories = data->Accessories;*/
+
+	Level = data->Level;
+	for (UFeat* feat : data->Feats)
+		Feats.Add(feat);
 }
 
 FCharacterData::~FCharacterData()
