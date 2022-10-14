@@ -14,7 +14,7 @@ class GENERICTACTICS_API UActionAttack : public UActionDirect
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
 		EAttackType AttackType;
 
 	virtual void Resolve(TScriptInterface<IActionSourceInterface> source, FVector target) override;

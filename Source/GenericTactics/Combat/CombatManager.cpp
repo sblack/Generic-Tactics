@@ -20,6 +20,7 @@
 #include "Kismet/KismetMathLibrary.h"
 
 UCombatManager* UCombatManager::Instance;
+UWorld* UCombatManager::BackupWorld;
 
 void UCombatManager::AdvanceActionQueue()
 {
@@ -38,18 +39,16 @@ void UCombatManager::AdvanceActionQueue()
 	bPerformingActions = false;
 }
 
+//required in order to spawn things in BP
+class UWorld* UCombatManager::GetWorld() const
+{
+	return (!HasAnyFlags(RF_ClassDefaultObject) && !GetOuter()->HasAnyFlags(RF_BeginDestroyed) && !GetOuter()->IsUnreachable() ? CastChecked<UGameInstance>(GetOuter())->GetWorld() : BackupWorld);
+}
+
 UCombatManager::UCombatManager()
 {
 	Instance = this;
 }
-
-//class UWorld* UCombatManager::GetWorld() const
-//{
-//	return (
-//		!HasAnyFlags(RF_ClassDefaultObject) && !GetOuter()->HasAnyFlags(RF_BeginDestroyed) && !GetOuter()->IsUnreachable() 
-//		? CastChecked<UGameInstance>(GetOuter())->GetWorld() : NULL
-//		);
-//}
 
 void UCombatManager::StartCombat()
 {
@@ -104,6 +103,25 @@ void UCombatManager::StartCombat()
 
 	Instance->InitiativeQueue[0]->BeginTurn();
 	Instance->InitiativeIndex = 0;
+
+	BackupWorld = nullptr; //make sure we're not using an old BackupWorld
+	if (Instance->GetWorld())
+	{
+		UE_LOG(LogTemp, Log, TEXT("GetWorld succeeded"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GetWorld failed; trying with backup"));
+		BackupWorld = Instance->PartyCharacters[0]->GetWorld();
+		if (Instance->GetWorld())
+		{
+			UE_LOG(LogTemp, Log, TEXT("backup GetWorld succeeded"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("backup GetWorld failed"));
+		}
+	}
 }
 
 void UCombatManager::StartPreCombat()
@@ -269,7 +287,7 @@ void UCombatManager::UpdateAreaOfEffect(FVector source, FVector target)
 	ANavGrid::Instance->ShowTargeting(source, Instance->PreppedAction->MaxRange);*/
 }
 
-bool UCombatManager::RollAttack(class UActionAttack* action, TScriptInterface<IActionSourceInterface> source, TScriptInterface<ITargetableInterface> target)
+ESuccessLevel UCombatManager::RollAttack(class UActionAttack* action, TScriptInterface<IActionSourceInterface> source, TScriptInterface<ITargetableInterface> target)
 {
 	if (Instance)
 	{
@@ -279,7 +297,7 @@ bool UCombatManager::RollAttack(class UActionAttack* action, TScriptInterface<IA
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("No CombatManager"));
-		return true;
+		return ESuccessLevel::Hit;
 	}
 }
 

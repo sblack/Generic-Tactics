@@ -49,7 +49,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 		class UTextBlock* ValidText;
 
-	TArray<FGridData*> StartArea;
+	TArray<struct FGridData*> StartArea;
 
 	virtual void NativeConstruct() override;
 

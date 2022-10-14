@@ -34,7 +34,7 @@ public:
 		virtual FVector GetLocation() const { return AsActor()->GetActorLocation(); }
 
 	UFUNCTION(BlueprintCallable, Category = "Target")
-		virtual FText GetTargetName() const { return FText(); }
+		virtual FText GetDisplayName() const { return FText(); }
 
 	UFUNCTION(BlueprintCallable, Category = "Target")
 		virtual int32 GetCurrentHealth() const { return 0; }

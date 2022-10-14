@@ -747,28 +747,27 @@ float AGTCharacter::RollInitiative()
 
 int32 AGTCharacter::ApplyDamage(int32 amount, EDamageType damageType, EVitals vital)
 {
+	amount -= Stats->Resist[damageType];
+	if(amount < 0) amount = 0; //damage can never be negative
 	UE_LOG(LogTemp, Log, TEXT("Apply Damage: %d"), amount);
-	UCombatManager::CombatManager()->SpawnTextIndicator(GetActorLocation(), FString::FromInt(amount), FColor::Red);
 
-	/*Stats->CurrentVitals[vital] -= amount;
+	Stats->CurrentVitals[vital] -= amount;
 	if (Stats->CurrentVitals[vital] <= 0)
 	{
 		Stats->CurrentVitals[vital] = 0;
 		switch (vital)
 		{
 		case EVitals::Health:
-			bDead = true;
-			CurrentAP = 0;
-			AnimState = EAnimState::Down;
-			break;
-		case EVitals::Stamina:
-			break;
-		case EVitals::Mana:
+			{
+				//TODO: DEATH/DOWN stuff
+				WeaponSprite->SetVisibility(false);
+				ShieldSprite->SetVisibility(false);
+			}
 			break;
 		default:
 			break;
 		}
-	}*/
+	}
 
 
 	return amount;

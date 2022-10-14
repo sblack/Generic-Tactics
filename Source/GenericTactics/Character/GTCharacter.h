@@ -228,6 +228,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	int32 GetAccuracy(EAttackType attack) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	bool GetIsDead() const { return GetCurrentHealth() == 0; }
+
+
+
 
 protected:
 
@@ -281,7 +286,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 		void EndTurn();
 
-	virtual FText GetTargetName() const override { return CharacterName; }
+	virtual FText GetDisplayName() const override { return CharacterName; }
 
 	float RollInitiative();
 

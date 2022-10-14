@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "../Utility/GTBFL.h"
 #include "../Utility/ActionSourceInterface.h"
 #include "../Utility/TargetableInterface.h"
 #include "CombatManager.generated.h"
@@ -37,6 +38,7 @@ class GENERICTACTICS_API UCombatManager : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 protected:
 	static UCombatManager* Instance;
+	static UWorld* BackupWorld;
 
 	UPROPERTY(BlueprintReadWrite)
 		TArray<TScriptInterface<IActionSourceInterface>> InitiativeQueue;
@@ -65,11 +67,11 @@ protected:
 	//DO I STILL NEED THIS?
 	void AdvanceActionQueue();
 
-	/** True = hit */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Combat")
-		bool AttackRoll(int32 accuracy, int32 defense);
+		ESuccessLevel AttackRoll(int32 accuracy, int32 defense);
 
 public:
+	virtual class UWorld* GetWorld() const override;
 
 	UPROPERTY(BlueprintReadOnly)
 		TArray<class AGTCharacter*> PartyCharacters;
@@ -85,8 +87,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
 		static UCombatManager* CombatManager() { return Instance; }
-
-	//virtual class UWorld* GetWorld() const override;
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 		static void StartCombat();
@@ -119,14 +119,17 @@ public:
 		static bool IsPreCombat() { return Instance->bPreCombat; }
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Combat")
-		void SpawnTextIndicator(FVector location, const FString& text, FColor color);
+		void SpawnTextIndicator(FVector location, const FString& text, FLinearColor color, float scale = 1);
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Combat")
+		void SpawnDamageIndicator(FVector location, int32 damage, ESuccessLevel success);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 		static void PrepareDirectAction(class UActionDirect* action);
 
 	static void UpdateAreaOfEffect(FVector source, FVector target);
 
-	static bool RollAttack(class UActionAttack* action, TScriptInterface<IActionSourceInterface> source, TScriptInterface<ITargetableInterface> target);
+	static ESuccessLevel RollAttack(class UActionAttack* action, TScriptInterface<IActionSourceInterface> source, TScriptInterface<ITargetableInterface> target);
 
 	static void ResetDetection(class AGTCharacter* mover);
 

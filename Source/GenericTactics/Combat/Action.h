@@ -31,27 +31,27 @@ public:
 		FText Name;
 
 	/** True range is +.5, for "rounding" */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Targeting")
 		float Range;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cost")
 		float APCost;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cost")
 		TMap<EVitals, int32> VitalCosts;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FX")
 		EActionAnim Anim;
 
 	/** timing and location determined by key */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FX")
 		TMap<FName, class UParticleSystem*> Particles;
 
 	/** timing and location determined by key */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FX")
 		TMap<FName, class USoundBase*> Sounds;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FX")
 		TSubclassOf<class AProjectile> ProjectileClass;
 
 	UAction();

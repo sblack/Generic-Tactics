@@ -34,7 +34,7 @@ public:
 		virtual FVector GetLocation() const { return AsActor()->GetActorLocation(); }
 
 	UFUNCTION(BlueprintCallable, Category = "Action")
-		virtual FText GetActionSourceName() const { return FText(); }
+		virtual FText GetDisplayName() const { return FText(); }
 
 	UFUNCTION(BlueprintCallable, Category = "Action")
 		virtual int32 GetAccuracy(EAttackType attack) const { return 0; }

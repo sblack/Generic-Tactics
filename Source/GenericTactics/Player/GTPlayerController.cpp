@@ -304,7 +304,7 @@ void AGTPlayerController::MouseOverTerrain(FVector location)
 	if(UGTHUDCode::Instance)
 	{
 		if (HoverTarget)
-			UGTHUDCode::Instance->UpdateDebugText(FString::Printf(TEXT("HoverTarget %s\nHoverLocation %s"), *HoverTarget->GetTargetName().ToString(), *HoverLocation.ToString()));
+			UGTHUDCode::Instance->UpdateDebugText(FString::Printf(TEXT("HoverTarget %s\nHoverLocation %s"), *HoverTarget->GetDisplayName().ToString(), *HoverLocation.ToString()));
 		else
 			UGTHUDCode::Instance->UpdateDebugText(FString::Printf(TEXT("HoverTarget NULL\nHoverLocation %s"), *HoverLocation.ToString()));
 	}
@@ -404,9 +404,9 @@ void AGTPlayerController::MouseOverTerrain(FVector location)
 
 void AGTPlayerController::MouseOverTarget(ITargetable target)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Red, FString::Printf(TEXT("MouseOverTarget %s"), *target->GetTargetName().ToString()));
+	GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Red, FString::Printf(TEXT("MouseOverTarget %s"), *target->GetDisplayName().ToString()));
 	if (UGTHUDCode::Instance)
-		UGTHUDCode::Instance->UpdateDebugText(FString::Printf(TEXT("HoverTarget %s\nHoverLocation %s"), *target->GetTargetName().ToString(), *HoverLocation.ToString()));
+		UGTHUDCode::Instance->UpdateDebugText(FString::Printf(TEXT("HoverTarget %s\nHoverLocation %s"), *target->GetDisplayName().ToString(), *HoverLocation.ToString()));
 	if (target == HoverTarget)
 		return;
 

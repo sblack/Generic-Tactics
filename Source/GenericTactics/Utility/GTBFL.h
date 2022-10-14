@@ -58,6 +58,14 @@ enum class EStatusAnim : uint8
 	Down
 };
 
+UENUM(BlueprintType)
+enum class ESuccessLevel : uint8
+{
+	CritHit,
+	Hit,
+	Miss
+};
+
 /**
  * 
  */
