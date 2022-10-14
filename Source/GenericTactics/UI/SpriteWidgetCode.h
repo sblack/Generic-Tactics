@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "../Appearance/ColorQuartetBFL.h" //WHAT THE FUCK
 #include "SpriteWidgetCode.generated.h"
 
 /**

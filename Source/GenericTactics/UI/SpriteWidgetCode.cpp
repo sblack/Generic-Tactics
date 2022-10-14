@@ -3,7 +3,7 @@
 
 #include "SpriteWidgetCode.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "../Appearance/ColorQuartetBFL.h"
+//#include "../Appearance/ColorQuartetBFL.h"
 #include "../Character/CharacterDataAsset.h"
 #include "../Utility/GTBFL.h"
 #include "Components/Image.h"
