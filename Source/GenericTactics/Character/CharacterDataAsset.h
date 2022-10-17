@@ -61,7 +61,10 @@ public:
 		TArray<class UItemEquipment*> Accessories;*/
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		uint8 Level = 1;
+		int32 TotalXP;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int32 RemainingXP;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<class UFeat*> Feats;
@@ -129,8 +132,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, EditFixedSize, Category = "Inventory")
 		TArray<class UItemEquipment*> Accessories;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-		uint8 Level = 1;
+	UPROPERTY(BlueprintReadWrite, Category = "Stats")
+		int32 TotalXP;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Stats")
+		int32 RemainingXP;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		TArray<class UFeat*> Feats;
@@ -157,5 +163,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Appearance")
 		uint8 GetCombinedHatIndex();
 
-
+	UFUNCTION(BlueprintPure, Category = "Stats")
+		virtual uint8 GetLevel();
 };

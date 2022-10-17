@@ -31,7 +31,10 @@ UStatsBlock::UStatsBlock(const FObjectInitializer& ObjectInitializer)
 
 void UStatsBlock::FillFromData(class UCharacterDataAsset* data)
 {
-	Level = data->Level;
+	Level = data->GetLevel();
+	//characters should start with enough XP to be level 1, but force it
+	if (Level < 1) Level = 1;
+
 	{
 		TMap<EVitals, float> scaleVital;
 		for (EVitals vit : TEnumRange<EVitals>())

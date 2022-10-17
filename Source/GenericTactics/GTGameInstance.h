@@ -20,6 +20,9 @@ protected:
 public:
 	static UGTGameInstance* Instance;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 1))
+		int32 XPPerLevel = 40;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		TArray<UAppearanceAsset*> BodyTypes;
 

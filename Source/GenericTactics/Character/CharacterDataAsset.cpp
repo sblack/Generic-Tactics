@@ -26,9 +26,17 @@ UCharacterDataAsset* UCharacterDataAsset::FromSave(struct FCharacterData saveDat
 	result->Armor = saveData.Armor;
 	result->Accessories = saveData.Accessories;*/
 
-	result->Level = saveData.Level;
+	result->TotalXP = saveData.TotalXP;
+	result->RemainingXP = saveData.RemainingXP;
 	for (UFeat* feat : saveData.Feats)
 		result->Feats.Add(feat);
+
+	//start the character at level 1 XP (if below)
+	if (result->TotalXP < UGTGameInstance::Instance->XPPerLevel)
+	{
+		result->RemainingXP += UGTGameInstance::Instance->XPPerLevel - result->TotalXP;
+		result->TotalXP = UGTGameInstance::Instance->XPPerLevel;
+	}
 
 	return result;
 }
@@ -164,6 +172,11 @@ uint8 UCharacterDataAsset::GetCombinedHatIndex()
 
 }
 
+uint8 UCharacterDataAsset::GetLevel()
+{
+	return TotalXP / UGTGameInstance::Instance->XPPerLevel;
+}
+
 FCharacterData::FCharacterData()
 {
 
@@ -188,7 +201,8 @@ FCharacterData::FCharacterData(class UCharacterDataAsset* data, int32 _id)
 	Armor = data->Armor;
 	Accessories = data->Accessories;*/
 
-	Level = data->Level;
+	TotalXP = data->TotalXP;
+	RemainingXP = data->RemainingXP;
 	for (UFeat* feat : data->Feats)
 		Feats.Add(feat);
 }

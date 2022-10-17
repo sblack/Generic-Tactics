@@ -18,6 +18,9 @@ public:
 		FText Name;
 
 	UPROPERTY(EditDefaultsOnly)
+		uint8 XPCost = 10;
+
+	UPROPERTY(EditDefaultsOnly)
 		TArray<UFeat*> PreReqs;
 
 	UPROPERTY(EditDefaultsOnly)
