@@ -39,6 +39,10 @@ public:
 
 	UStatsBlock(const FObjectInitializer& ObjectInitializer);
 
+	UFUNCTION(BlueprintCallable)
+	void Reset();
+
+	UFUNCTION(BlueprintCallable)
 	void FillFromData(class UCharacterDataAsset* data);
 
 	UFUNCTION(BlueprintPure)

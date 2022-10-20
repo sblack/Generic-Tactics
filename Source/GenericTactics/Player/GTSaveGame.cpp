@@ -38,26 +38,34 @@ void UGTSaveGame::SaveCharacter(class UCharacterDataAsset* character)
 	{
 		for (int i = 0; i < Characters.Num(); i++)
 		{
+			/*if (!Characters[i]) //can't null check structs
+			{
+				UE_LOG(LogTemp, Error, TEXT("Character[%d] is null"), i);
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Character[%d] is null"), i));
+				return;
+			}*/
 			if (Characters[i].ID == character->ID)
 			{
+
 				FText oldName = Characters[i].Name;
 
-				/*if (!oldName)
+				/*if (&oldName == nullptr)
 				{
-					UE_LOG(LogTemp, Error, TEXT("WHAT THE FUCK"));
-					oldName = Characters[i].Name;
+					UE_LOG(LogTemp, Error, TEXT("WHYYYYYYYYY"));
+					return;
 				}*/
 
 				Characters[i] = FCharacterData(character, character->ID);
 
-				if (character->Name.EqualTo(oldName)) //WHAT PROBLEM DOES UE4 HAVE WITH THIS LINE?!
+				//DISABLING UNTIL A SOLUTION IS FOUND
+				//if (character->Name.EqualTo(oldName)) //WHAT PROBLEM DOES UE4 HAVE WITH THIS LINE?!
 				{
 					UE_LOG(LogTemp, Log, TEXT("Character %s modified"), *character->Name.ToString());
 				}
-				else
+				/*else
 				{
 					UE_LOG(LogTemp, Log, TEXT("Old character %s saved as %s"), *oldName.ToString(), *character->Name.ToString());
-				}
+				}*/
 				return;
 			}
 		}

@@ -15,6 +15,9 @@ class GENERICTACTICS_API UGTGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 protected:
+	UPROPERTY(EditAnywhere)
+		TArray<FString> FeatPaths;
+
 	void LoadData();
 
 public:
@@ -28,6 +31,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		TArray<UAppearanceSetAsset*> HatTypes;
+
+	UPROPERTY(BlueprintReadOnly)
+		TArray<class UFeat*> Feats;
 
 	UFUNCTION(BlueprintPure)
 		static UGTGameInstance* GetGTGameInstance() { return Instance; }

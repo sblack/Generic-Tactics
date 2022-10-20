@@ -29,6 +29,26 @@ UStatsBlock::UStatsBlock(const FObjectInitializer& ObjectInitializer)
 	}
 }
 
+void UStatsBlock::Reset()
+{
+	for (EVitals vit : TEnumRange<EVitals>())
+	{
+		CurrentVitals[vit] = 0;
+		MaxVitals[vit] = 0;
+	}
+
+	for (EAttackType att : TEnumRange<EAttackType>())
+	{
+		Defense[att] = 0;
+		Accuracy[att] = 0;
+	}
+
+	for (EDamageType dam : TEnumRange<EDamageType>())
+	{
+		Resist[dam] = 0;
+	}
+}
+
 void UStatsBlock::FillFromData(class UCharacterDataAsset* data)
 {
 	Level = data->GetLevel();
@@ -90,11 +110,32 @@ void UStatsBlock::FillFromData(class UCharacterDataAsset* data)
 		}
 		//TODO: buffs from equipment
 
-
-		for (EVitals vit : TEnumRange<EVitals>())
+		//special handling of Vitals
 		{
-			MaxVitals[vit] += (int)(scaleVital[vit] * Level);
+			MaxVitals[EVitals::Health] += (int)(scaleVital[EVitals::Health] * Level);
+
+			//if character doesn't have basic mana feat; no mana regardless of other sources
+			if (scaleVital[EVitals::Mana] == 0) 
+				MaxVitals[EVitals::Mana] = 0;
+			else
+			{
+				MaxVitals[EVitals::Mana] += (int)(scaleVital[EVitals::Mana] * Level);
+				//... otherwise, guaranteed at least one mana
+				if (MaxVitals[EVitals::Mana] < 1)
+					MaxVitals[EVitals::Mana] = 1;
+			}
+			
+			//same for stamina
+			if (scaleVital[EVitals::Stamina] == 0)
+				MaxVitals[EVitals::Stamina] = 0;
+			else
+			{
+				MaxVitals[EVitals::Stamina] += (int)(scaleVital[EVitals::Stamina] * Level);
+				if (MaxVitals[EVitals::Stamina] < 1)
+					MaxVitals[EVitals::Stamina] = 1;
+			}
 		}
+
 		for (EAttackType att : TEnumRange<EAttackType>())
 		{
 			Defense[att] += (int)(scaleDefense[att] * Level);

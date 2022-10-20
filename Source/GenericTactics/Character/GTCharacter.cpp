@@ -546,6 +546,7 @@ void AGTCharacter::CompleteAction()
 	{
 		ANavGrid::Instance->ShowMoveRange(this);
 		UGTHUDCode::Instance->ShowHideCommandMenu(this);
+		UGTHUDCode::Instance->RefreshCharacterVitals();
 	}
 	else
 		ANavGrid::Instance->GenerateMoveData(this);
@@ -614,6 +615,20 @@ void AGTCharacter::FireProjectile()
 		projectile->Init(ActionInProgress.Action, this, ActionInProgress.Location);
 	}
 }
+
+void AGTCharacter::Meditate()
+{
+	Stats->CurrentVitals[EVitals::Mana] += (int)((Stats->Level + 1)/2);
+	if (Stats->CurrentVitals[EVitals::Mana] > Stats->MaxVitals[EVitals::Mana])
+	{
+		Stats->CurrentVitals[EVitals::Mana] = Stats->MaxVitals[EVitals::Mana];
+	}
+
+	CurrentAP -= 3;
+
+	CompleteAction();
+}
+
 
 
 

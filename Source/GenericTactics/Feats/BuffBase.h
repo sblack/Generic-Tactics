@@ -13,8 +13,10 @@ UCLASS(ABSTRACT, EditInlineNew, BlueprintType)
 class GENERICTACTICS_API UBuffBase : public UObject
 {
 	GENERATED_BODY()
+
 public:
 	/** In turns; does not apply to buffs from feats and equipment */
-	UPROPERTY(EditInstanceOnly)
+	UPROPERTY(EditInstanceOnly, Category = "Buff")
 		uint8 Duration;
+
 };

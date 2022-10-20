@@ -165,4 +165,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Stats")
 		virtual uint8 GetLevel();
+
+	UFUNCTION(BlueprintCallable, Category = "Feats")
+		TArray<class UFeat*> GetAvailableFeats();
+
+	UFUNCTION(BlueprintCallable, Category = "Feats")
+		void LearnFeat(class UFeat* feat);
 };

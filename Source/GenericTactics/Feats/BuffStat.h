@@ -16,18 +16,18 @@ class GENERICTACTICS_API UBuffStat : public UBuffBase
 	GENERATED_BODY()
 public:
 	/** if true, values are multiplied by recipient's level. If false, value is static */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Buff")
 		bool bScaleByLevel;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Buff")
 		TMap<EVitals, float> MaxVitals;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Buff")
 		TMap<EAttackType, float> Defense;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Buff")
 		TMap<EAttackType, float> Accuracy;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Buff")
 		TMap<EDamageType, float> Resist;
 };

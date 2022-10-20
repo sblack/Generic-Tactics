@@ -14,21 +14,31 @@ class GENERICTACTICS_API UFeat : public UDataAsset
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		FText Name;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		uint8 XPCost = 10;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		TArray<UFeat*> PreReqs;
 
-	UPROPERTY(EditDefaultsOnly)
+	/** Feats that require this feat as a prereq*/
+	UPROPERTY(Transient, BlueprintReadOnly)
+		TArray<UFeat*> DerivedFeats;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		uint8 MinLevel = 0;
 
-	UPROPERTY(EditDefaultsOnly, Instanced)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		FText Description;
+
+	UPROPERTY(EditDefaultsOnly, Instanced, BlueprintReadOnly)
 		TArray<class UAction*> Actions;
 
-	UPROPERTY(EditDefaultsOnly, Instanced)
+	UPROPERTY(EditDefaultsOnly, Instanced, BlueprintReadOnly)
 		TArray<class UBuffBase*> Passives;
+
+	UFUNCTION(BlueprintPure)
+	FText GetReqText();
 };

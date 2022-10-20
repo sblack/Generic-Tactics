@@ -212,6 +212,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 		void FireProjectile();
 
+	/** TODO: handle better */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+		void Meditate();
+
 
 
 //STATS

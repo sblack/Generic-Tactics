@@ -177,6 +177,55 @@ uint8 UCharacterDataAsset::GetLevel()
 	return TotalXP / UGTGameInstance::Instance->XPPerLevel;
 }
 
+TArray<class UFeat*> UCharacterDataAsset::GetAvailableFeats()
+{
+	TArray<UFeat*> result;
+	for (UFeat* feat : UGTGameInstance::Instance->Feats)
+	{
+		if(Feats.Contains(feat)) continue;
+		
+		bool bHavePreReqs = true;
+		for (UFeat* preReq : feat->PreReqs)
+		{
+			if (!Feats.Contains(preReq))
+			{
+				bHavePreReqs = false;
+				break;
+			}
+		}
+		if(bHavePreReqs) result.Add(feat);
+	}
+
+	return result;
+}
+
+void UCharacterDataAsset::LearnFeat(class UFeat* feat)
+{
+	if (!feat)
+	{
+		UE_LOG(LogTemp, Error, TEXT("LearnFeat: feat is null"));
+		return;
+	}
+	if (Feats.Contains(feat))
+	{
+		UE_LOG(LogTemp, Error, TEXT("LearnFeat: already know feat"));
+		return;
+	}
+
+	Feats.Add(feat);
+	if (RemainingXP < feat->XPCost)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LearnFeat: insufficient XP"));
+		RemainingXP = 0;
+	}
+	else
+	{
+		RemainingXP -= feat->XPCost;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("LearnFeat: learned %s"), *feat->Name.ToString());
+}
+
 FCharacterData::FCharacterData()
 {
 
