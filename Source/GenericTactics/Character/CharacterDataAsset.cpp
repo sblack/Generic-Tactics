@@ -29,7 +29,10 @@ UCharacterDataAsset* UCharacterDataAsset::FromSave(struct FCharacterData saveDat
 	result->TotalXP = saveData.TotalXP;
 	result->RemainingXP = saveData.RemainingXP;
 	for (UFeat* feat : saveData.Feats)
+	{
 		result->Feats.Add(feat);
+		if(feat->bChassisFeat) result->ChassisFeatCount += 1;
+	}
 
 	//start the character at level 1 XP (if below)
 	if (result->TotalXP < UGTGameInstance::Instance->XPPerLevel)
@@ -222,6 +225,9 @@ void UCharacterDataAsset::LearnFeat(class UFeat* feat)
 	{
 		RemainingXP -= feat->XPCost;
 	}
+
+	if(feat->bChassisFeat)
+		ChassisFeatCount += 1;
 
 	UE_LOG(LogTemp, Log, TEXT("LearnFeat: learned %s"), *feat->Name.ToString());
 }

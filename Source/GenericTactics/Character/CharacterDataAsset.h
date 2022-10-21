@@ -141,6 +141,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		TArray<class UFeat*> Feats;
 
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stats")
+		int32 ChassisFeatCount = 0;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "AI")
 		TArray<class UAIObjective*> AIObjectives;
 	

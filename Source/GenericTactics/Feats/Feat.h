@@ -33,6 +33,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		FText Description;
 
+	/** characters are limited on chassis feats, to discourage just pumping up stats as quickly as possible */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		bool bChassisFeat;
+
 	UPROPERTY(EditDefaultsOnly, Instanced, BlueprintReadOnly)
 		TArray<class UAction*> Actions;
 
