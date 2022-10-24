@@ -40,6 +40,17 @@ enum class EAttackType : uint8
 };
 ENUM_RANGE_BY_FIRST_AND_LAST(EAttackType, EAttackType::Melee, EAttackType::Magic);
 
+UENUM(BlueprintType)
+enum class ECharStat : uint8
+{
+	Str,
+	Dex,
+	Con,
+	Int,
+	Wis,
+	None	//not based on any character stat
+};
+ENUM_RANGE_BY_FIRST_AND_LAST(ECharStat, ECharStat::Str, ECharStat::Wis);
 
 UENUM(BlueprintType)
 enum class EActionAnim : uint8

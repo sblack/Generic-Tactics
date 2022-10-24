@@ -41,6 +41,8 @@ UCharacterDataAsset* UCharacterDataAsset::FromSave(struct FCharacterData saveDat
 		result->TotalXP = UGTGameInstance::Instance->XPPerLevel;
 	}
 
+	result->StatChoices = saveData.StatChoices;
+
 	return result;
 }
 
@@ -260,6 +262,8 @@ FCharacterData::FCharacterData(class UCharacterDataAsset* data, int32 _id)
 	RemainingXP = data->RemainingXP;
 	for (UFeat* feat : data->Feats)
 		Feats.Add(feat);
+
+	StatChoices = data->StatChoices;
 }
 
 FCharacterData::~FCharacterData()

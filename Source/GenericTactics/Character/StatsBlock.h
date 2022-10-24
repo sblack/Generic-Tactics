@@ -15,7 +15,7 @@ class GENERICTACTICS_API UStatsBlock : public UObject
 {
 	GENERATED_BODY()
 private:
-
+	void CalcStats(class UCharacterDataAsset* data);
 public:
 	UPROPERTY(BlueprintReadWrite)
 		uint8 Level;
@@ -27,6 +27,9 @@ public:
 		TMap<EVitals, int32> MaxVitals;
 
 	UPROPERTY(BlueprintReadWrite)
+		TMap<ECharStat, int32> Stats;
+
+	UPROPERTY(BlueprintReadWrite)
 		TMap<EAttackType, int32> Defense;
 
 	UPROPERTY(BlueprintReadWrite)
@@ -35,7 +38,11 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		TMap<EDamageType, int32> Resist;
 
+	UPROPERTY(BlueprintReadOnly)
 	int32 DetectionRadius = 2;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 SpellLevel;
 
 	UStatsBlock(const FObjectInitializer& ObjectInitializer);
 

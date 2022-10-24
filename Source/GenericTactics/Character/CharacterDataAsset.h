@@ -69,6 +69,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<class UFeat*> Feats;
 
+	/** first four are lvl 1 choices (pick4 to pick1); bytes after those are level up */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<uint8> StatChoices;
+
 	FCharacterData();
 
 	FCharacterData(class UCharacterDataAsset* data, int32 _id);
@@ -143,6 +147,10 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stats")
 		int32 ChassisFeatCount = 0;
+
+	/** first four are lvl 1 choices (pick4 to pick1); bytes after those are level up */
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stats")
+		TArray<uint8> StatChoices;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "AI")
 		TArray<class UAIObjective*> AIObjectives;
