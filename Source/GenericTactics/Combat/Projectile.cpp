@@ -23,12 +23,8 @@ void AProjectile::BeginPlay()
 //#define GRAV .0098f
 #define GRAV2 3920.0f
 
-// Called every frame
-void AProjectile::Tick(float DeltaTime)
+void AProjectile::UpdatePosition_Implementation(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
-	TotalTime += DeltaTime;
-
 	if (bBallistic)
 	{
 		SetActorLocation(StartLocation + Velocity * TotalTime + FVector(0, 0, -GRAV2 / 2 * TotalTime * TotalTime));
@@ -37,9 +33,18 @@ void AProjectile::Tick(float DeltaTime)
 	else
 	{
 		SetActorLocation(GetActorLocation() + Velocity * DeltaTime * Speed);
-		Velocity += (Target - GetActorLocation()).GetSafeNormal() * DeltaTime * TotalTime;
+		Velocity += (Target - GetActorLocation()).GetSafeNormal() * DeltaTime * TotalTime * 10;
 		Velocity.Normalize();
 	}
+}
+
+// Called every frame
+void AProjectile::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	TotalTime += DeltaTime;
+
+	UpdatePosition(DeltaTime);
 
 	if (FVector::DistSquared(GetActorLocation(), Target) < 50 * 50)
 	{
@@ -74,7 +79,9 @@ void AProjectile::Init(class UAction* action, class AGTCharacter* source, FVecto
 	}
 	else
 	{
-		Velocity = FMath::VRandCone(FVector(0, 0, 1), PI / 4, PI / 4);
-		Speed = eta;
+		Velocity = FMath::VRandCone(FVector(0, 0, 1) + (Target - GetActorLocation()).Normalize(), PI / 4, PI / 4);
+		Speed *= eta;
+		UE_LOG(LogTemp, Log, TEXT("Velocity: %s"), *Velocity.ToString());
+		UE_LOG(LogTemp, Log, TEXT("Speed   : %f"), Speed); 
 	}
 }

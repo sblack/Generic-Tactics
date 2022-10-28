@@ -52,6 +52,11 @@ void UCombatEffectDamage::PostEditChangeProperty(FPropertyChangedEvent& Property
 		PropertyName == GET_MEMBER_NAME_CHECKED(UCombatEffectDamage, DiceSides) ||
 		PropertyName == GET_MEMBER_NAME_CHECKED(UCombatEffectDamage, DiceCount))
 	{
-		MaxDamage = MinDamage + DiceCount * (DiceSides - 1);
+		CalcMaxDamage();
 	}
+}
+
+void UCombatEffectDamage::CalcMaxDamage()
+{
+	MaxDamage = MinDamage + DiceCount * (DiceSides - 1);
 }

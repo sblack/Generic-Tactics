@@ -26,6 +26,9 @@ UCharacterDataAsset* UCharacterDataAsset::FromSave(struct FCharacterData saveDat
 	result->Armor = saveData.Armor;
 	result->Accessories = saveData.Accessories;*/
 
+	result->Weapon = saveData.Weapon;
+	result->Shield = saveData.Shield;
+
 	result->TotalXP = saveData.TotalXP;
 	result->RemainingXP = saveData.RemainingXP;
 	for (UFeat* feat : saveData.Feats)
@@ -257,6 +260,9 @@ FCharacterData::FCharacterData(class UCharacterDataAsset* data, int32 _id)
 	Shield = data->Shield;
 	Armor = data->Armor;
 	Accessories = data->Accessories;*/
+
+	Weapon = data->Weapon;
+	Shield = data->Shield;
 
 	TotalXP = data->TotalXP;
 	RemainingXP = data->RemainingXP;

@@ -116,3 +116,59 @@ UEnum* UGTBFL::Damage()
 	}
 	return DamagePtr;
 };
+
+FText UGTBFL::VitalToText(EVitals vital)
+{
+	switch (vital)
+	{
+	case EVitals::Health: return NSLOCTEXT("Vitals", "Health", "Health");
+	case EVitals::Mana: return NSLOCTEXT("Vitals", "Mana", "Mana");
+	case EVitals::Stamina: return NSLOCTEXT("Vitals", "Stamina", "Stamina");
+	default:
+		return FText::FromString("ERROR");
+	}
+}
+
+FText UGTBFL::DamageToText(EDamageType damage)
+{
+	switch (damage)
+	{
+	case EDamageType::Piercing:	return NSLOCTEXT("Damage", "Piercing", "Piercing");
+	case EDamageType::Crushing:	return NSLOCTEXT("Damage", "Crushing", "Crushing");
+	case EDamageType::Slashing:	return NSLOCTEXT("Damage", "Slashing", "Slashing");
+	case EDamageType::Fire:	return NSLOCTEXT("Damage", "Fire", "Fire");
+	case EDamageType::Acid:	return NSLOCTEXT("Damage", "Acid", "Acid");
+	case EDamageType::Cold:	return NSLOCTEXT("Damage", "Cold", "Cold");
+	case EDamageType::Electric:	return NSLOCTEXT("Damage", "Electric", "Electric");
+	case EDamageType::Typeless:	return NSLOCTEXT("Damage", "Typeless", "Typeless");
+	default:
+		return FText::FromString("ERROR");
+	}
+}
+
+FText UGTBFL::AttackToText(EAttackType attack)
+{
+	switch (attack)
+	{
+	case EAttackType::Melee:	return NSLOCTEXT("Attack", "Melee", "Melee");
+	case EAttackType::Range:	return NSLOCTEXT("Attack", "Ranged", "Ranged");
+	case EAttackType::Magic:	return NSLOCTEXT("Attack", "Magic", "Magic");
+	default:
+		return FText::FromString("ERROR");
+	}
+}
+
+FText UGTBFL::CharStatToText(ECharStat stat)
+{
+	switch (stat)
+	{
+	case ECharStat::Str:	return NSLOCTEXT("CharStat", "Str", "STR");
+	case ECharStat::Dex:	return NSLOCTEXT("CharStat", "Dex", "DEX");
+	case ECharStat::Con:	return NSLOCTEXT("CharStat", "Con", "CON");
+	case ECharStat::Int:	return NSLOCTEXT("CharStat", "Int", "INT");
+	case ECharStat::Wis:	return NSLOCTEXT("CharStat", "Wis", "WIS");
+	case ECharStat::None:	return NSLOCTEXT("CharStat", "None", "NONE");
+	default:
+		return FText::FromString("ERROR");
+	}
+}

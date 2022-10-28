@@ -31,14 +31,16 @@ enum class EDamageType : uint8
 };
 ENUM_RANGE_BY_FIRST_AND_LAST(EDamageType, EDamageType::Piercing, EDamageType::Typeless);
 
-UENUM(BlueprintType)
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EAttackType : uint8
 {
-	Melee,
-	Range,
-	Magic
+	None	= 0 UMETA(Hidden),
+	Melee	= 1 << 0,
+	Range	= 1 << 1,
+	Magic	= 1 << 2,
 };
 ENUM_RANGE_BY_FIRST_AND_LAST(EAttackType, EAttackType::Melee, EAttackType::Magic);
+ENUM_CLASS_FLAGS(EAttackType);
 
 UENUM(BlueprintType)
 enum class ECharStat : uint8
@@ -113,5 +115,11 @@ public:
 
 	static UEnum* Vitals();
 	static UEnum* Damage();
+
+
+	static FText VitalToText(EVitals vital);
+	static FText DamageToText(EDamageType damage);
+	static FText AttackToText(EAttackType attack);
+	static FText CharStatToText(ECharStat stat);
 	
 };

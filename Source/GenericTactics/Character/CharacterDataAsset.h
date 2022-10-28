@@ -6,6 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "../Appearance/AppearanceAsset.h"
 #include "../Appearance/ColorQuartetBFL.h"
+#include "../Items/ItemEquipment.h"
 #include "CharacterDataAsset.generated.h"
 
 /**
@@ -47,6 +48,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FColorQuartet HatColorsHSL;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FModifiedEquipment Weapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FModifiedEquipment Shield;
 
 	/*UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		class UItemWeapon* Weapon;
@@ -125,10 +132,10 @@ public:
 		FColorQuartet HatColorsHSL;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-		class UItemWeapon* Weapon;
+		FModifiedEquipment Weapon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-		class UItemEquipment* Shield;
+		FModifiedEquipment Shield;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 		class UItemEquipment* Armor;

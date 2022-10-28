@@ -18,6 +18,9 @@ protected:
 	UPROPERTY(EditAnywhere)
 		TArray<FString> FeatPaths;
 
+	UPROPERTY(EditAnywhere)
+		TArray<FString> ItemPaths;
+
 	void LoadData();
 
 public:
@@ -34,6 +37,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 		TArray<class UFeat*> Feats;
+
+	UPROPERTY(BlueprintReadOnly)
+		TArray<class UItemEquipment*> Equipment;
 
 	UFUNCTION(BlueprintPure)
 		static UGTGameInstance* GetGTGameInstance() { return Instance; }

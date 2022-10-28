@@ -3,6 +3,8 @@
 
 #include "GTGameInstance.h"
 #include "Feats/Feat.h"
+#include "Items/Item.h"
+#include "Items/ItemEquipment.h"
 #include "Kismet/GameplayStatics.h"
 #include "AssetRegistryModule.h"
 #include "ARFilter.h"
@@ -58,4 +60,33 @@ void UGTGameInstance::LoadData()
 		//UE_LOG(LogTemp, Log, TEXT("%s: %s"), *AssetData[i].AssetName.ToString(), *AssetData[i].AssetClass.ToString());
 	}
 	UE_LOG(LogTemp, Log, TEXT("   %d Feats Loaded"), Feats.Num());
+
+
+	UE_LOG(LogTemp, Log, TEXT("   LOADING ITEMS"));
+	AssetData.Empty();
+	Filter = FARFilter();
+	Filter.ClassNames.Add(UItem::StaticClass()->GetFName());
+	for (int i = 0; i < ItemPaths.Num(); i++)
+	{
+		FName path = FName(*ItemPaths[i], FNAME_Find);
+		if (path != NAME_None)
+			Filter.PackagePaths.Add(path);
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Path %s not found."), *ItemPaths[i]);
+		}
+	}
+	Filter.bRecursivePaths = true;
+	Filter.bRecursiveClasses = true;
+	AssetRegistryModule.Get().GetAssets(Filter, AssetData);
+
+	for (int i = 0; i < AssetData.Num(); i++)
+	{
+		UItemEquipment* equip = Cast<UItemEquipment>(AssetData[i].GetAsset());
+		if(equip)
+			Equipment.Add(equip);
+		//TODO: else, add to list of non-equipment items
+		//Items.Add(Cast<UItem>(AssetData[i].GetAsset()));
+		//UE_LOG(LogTemp, Log, TEXT("%s: %s"), *AssetData[i].AssetName.ToString(), *AssetData[i].AssetClass.ToString());
+	}
 }

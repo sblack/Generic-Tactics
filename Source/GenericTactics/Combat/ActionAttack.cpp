@@ -4,6 +4,8 @@
 #include "ActionAttack.h"
 #include "CombatManager.h"
 #include "CombatEffect.h"
+#include "../Character/GTCharacter.h"
+#include "../Character/CharacterDataAsset.h"
 #include "../Movement/NavGrid.h"
 
 void UActionAttack::Resolve(TScriptInterface<IActionSourceInterface> source, FVector target)
@@ -43,4 +45,99 @@ void UActionAttack::Resolve(TScriptInterface<IActionSourceInterface> source, FVe
 			}
 		}
 	}
+}
+
+void UActionWeapon::Resolve(TScriptInterface<IActionSourceInterface> source, FVector target)
+{
+	UE_LOG(LogTemp, Error, TEXT("UActionWeapons should not be directly useable; instead use generated UActionAttack"));
+}
+
+bool UActionWeapon::CheckWeaponCompatible(UItemWeapon* weapon)
+{
+	if (!weapon) return false;
+
+	if (!(AllowedAttackTypes & (uint8)weapon->AttackType)) return false;
+	if (!(AllowedWeaponTypes & (uint8)weapon->WeaponType)) return false;
+	if (!(AllowedHandTypes & (uint8)weapon->HandType)) return false;
+
+	return true;
+}
+
+UActionAttack* UActionWeapon::CreateAttack(class AGTCharacter* source)
+{
+	if (!source)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Missing source character"));
+		return nullptr;
+	}
+
+	FModifiedEquipment weapon = source->CharacterData->Weapon;
+	if (!weapon.BaseItem)
+	{
+		//TODO: default "weapon"
+		UE_LOG(LogTemp, Warning, TEXT("TODO: handling no weapon equipped"));
+		return nullptr;
+	}
+
+	UItemWeapon* baseWeapon = Cast<UItemWeapon>(weapon.BaseItem);
+
+	UActionAttack* attack = NewObject<UActionAttack>();
+	//if Name is empty, this is a default attack; use weapon's name instead
+	attack->Name = (Name.IsEmptyOrWhitespace()) ? weapon.GetName() : Name;
+	attack->Range = FMath::Max(baseWeapon->Range, Range);
+	attack->Anim = (Anim == EActionAnim::Attack) ? baseWeapon->Anim : Anim;
+	attack->ProjectileClass = (ProjectileClass == nullptr) ? baseWeapon->ProjectileClass : ProjectileClass;
+	attack->Particles.Append(baseWeapon->Particles);
+	attack->Particles.Append(Particles); //entries in Particles (should) override entries with matching keys
+	attack->Sounds.Append(baseWeapon->Sounds);
+	attack->Sounds.Append(Sounds); //entries in Sounds (should) override entries with matching keys
+
+
+	attack->Effects = weapon.GetCombatEffects();
+	attack->Effects.Append(Effects);
+
+
+	attack->AttackType = baseWeapon->AttackType;
+	attack->APCost = APCost;
+	attack->VitalCosts = VitalCosts;
+	attack->Particles = Particles;
+	attack->Sounds = Sounds;
+	attack->Area = Area;
+
+	return attack;
+}
+
+UActionAttack* UActionWeapon::CreateDefaultAttack(class AGTCharacter* source)
+{
+	if (!source)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Missing source character"));
+		return nullptr;
+	}
+
+	FModifiedEquipment weapon = source->CharacterData->Weapon;
+	if (!weapon.BaseItem)
+	{
+		//TODO: default "weapon"
+		UE_LOG(LogTemp, Warning, TEXT("TODO: handling no weapon equipped"));
+		return nullptr;
+	}
+
+	UItemWeapon* baseWeapon = Cast<UItemWeapon>(weapon.BaseItem);
+
+	UActionAttack* attack = NewObject<UActionAttack>();
+	//if Name is empty, this is a default attack; use weapon's name instead
+	attack->Name = weapon.GetName();
+	attack->Range = baseWeapon->Range;
+	attack->Anim = baseWeapon->Anim;
+	attack->ProjectileClass = baseWeapon->ProjectileClass;
+	attack->Particles.Append(baseWeapon->Particles);
+	attack->Sounds.Append(baseWeapon->Sounds);
+
+	attack->Effects = weapon.GetCombatEffects();
+
+	attack->AttackType = baseWeapon->AttackType;
+	attack->APCost = 1;
+
+	return attack;
 }

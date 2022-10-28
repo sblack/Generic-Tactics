@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType)
 class GENERICTACTICS_API UItem : public UDataAsset
 {
 	GENERATED_BODY()

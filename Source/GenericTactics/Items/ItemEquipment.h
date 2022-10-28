@@ -24,24 +24,51 @@ class GENERICTACTICS_API UItemEquipment : public UItem
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Equipment", meta = (EditCondition = "EquipType==EEquipType::Weapon || EquipType==EEquipType::Shield", EditConditionHides))
+		class UPaperSprite* Sprite;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Equipment")
 		EEquipType EquipType;
 
-	UPROPERTY(EditAnywhere, EditFixedSize, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Equipment")
+		TMap<EVitals, float> Vitals;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Equipment")
 		TMap<EAttackType, float> Defense;
 
-	UPROPERTY(EditAnywhere, EditFixedSize, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Equipment")
 		TMap<EAttackType, float> Accuracy;
 
-	UPROPERTY(EditAnywhere, EditFixedSize, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Equipment")
 		TMap<EDamageType, float> Resist;
 
-	UPROPERTY(EditAnywhere, EditFixedSize, BlueprintReadOnly)
-		TMap<EDamageType, float> Penetrate;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Equipment")
+		uint8 Weight;
 
-#if WITH_EDITOR
-	virtual bool CanEditChange(const FProperty* InProperty) const override;
-#endif
+//#if WITH_EDITOR
+//	virtual bool CanEditChange(const FProperty* InProperty) const override;
+//#endif
+//
+//	virtual void PostLoad() override;
+};
 
-	virtual void PostLoad() override;
+/**
+ *
+ */
+ USTRUCT(BlueprintType)
+struct GENERICTACTICS_API FModifiedEquipment
+{
+	GENERATED_USTRUCT_BODY()
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UItemEquipment* BaseItem;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	uint8 Enhancement;
+
+	//TODO: special modifiers (eg flaming, bane)
+
+	FText GetName();
+
+	TArray<class UCombatEffect*> GetCombatEffects();
 };

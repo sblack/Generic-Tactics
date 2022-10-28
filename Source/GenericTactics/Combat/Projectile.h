@@ -24,17 +24,25 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	FVector Target;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	FVector Velocity;
 
-	UPROPERTY(BlueprintReadOnly)
-	float Speed;
+	/** property serves as speed multiplier */
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	float Speed = 1;
 
 	FVector StartLocation;
+
+	UPROPERTY(BlueprintReadOnly)
 	float TotalTime = 0;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintNativeEvent)
+		void UpdatePosition(float DeltaTime);
+
+	void UpdatePosition_Implementation(float DeltaTime);
 
 public:
 	// Sets default values for this actor's properties

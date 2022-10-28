@@ -46,4 +46,5 @@ public:
 	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
+	void CalcMaxDamage();
 };

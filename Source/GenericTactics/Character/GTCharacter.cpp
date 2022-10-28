@@ -5,8 +5,10 @@
 #include "GTAIController.h"
 #include "StatsBlock.h"
 #include "../Combat/Action.h"
+#include "../Combat/ActionAttack.h"
 #include "../Combat/CombatManager.h"
 #include "../Combat/Projectile.h"
+#include "../Items/ItemEquipment.h"
 //#include "../Movement/NavGrid.h"
 #include "../Player/CameraPawn.h"
 #include "../Player/GTPlayerController.h"
@@ -49,6 +51,7 @@ void AGTCharacter::BeginPlay()
 	CharacterName = CharacterData->Name;
 	InitMaterials();
 	IDirectionalSpriteInterface::Sprites.Add(this);
+	UpdateWeaponAndShield();
 
 	Stats = NewObject<UStatsBlock>(this, TEXT("Stats"));
 	Stats->FillFromData(CharacterData);
@@ -247,6 +250,29 @@ void AGTCharacter::UpdateFacing()
 	HatBackSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
 
 	UGTBFL::FaceCamera(this, GetSprite());
+}
+
+void AGTCharacter::UpdateWeaponAndShield()
+{
+	if (CharacterData->Weapon.BaseItem)
+	{
+		WeaponSprite->SetSprite(CharacterData->Weapon.BaseItem->Sprite);
+		WeaponSprite->SetVisibility(true);
+	}
+	else
+	{
+		WeaponSprite->SetVisibility(false);
+	}
+
+	if (CharacterData->Shield.BaseItem)
+	{
+		ShieldSprite->SetSprite(CharacterData->Shield.BaseItem->Sprite);
+		ShieldSprite->SetVisibility(true);
+	}
+	else
+	{
+		ShieldSprite->SetVisibility(false);
+	}
 }
 
 void AGTCharacter::OnAnimSequenceUpdated(const UPaperZDAnimSequence* From, const UPaperZDAnimSequence* To, float CurrentProgress)
@@ -523,6 +549,13 @@ void AGTCharacter::ResolveAction()
 	if (ActionInProgress.Action)
 	{
 		ActionInProgress.Action->Resolve(this, ActionInProgress.Location);
+
+		UParticleSystem** partPtr = ActionInProgress.Action->Particles.Find(TEXT("ResolveTargetLoc")); //resolution of action; target location
+		if (partPtr != nullptr)
+		{
+			UParticleSystemComponent* psc = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), *partPtr, ActionInProgress.Location + FVector(0, 0, 80));
+		}
+
 		if (bWaitingOnProjectile)
 		{
 			bWaitingOnProjectile = false;
@@ -608,7 +641,7 @@ void AGTCharacter::FireProjectile()
 {
 	if (ActionInProgress.Action && ActionInProgress.Action->ProjectileClass)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Firing Projectile"));
+		UE_LOG(LogTemp, Log, TEXT("Firing Projectile %s"), *ActionInProgress.Action->ProjectileClass->GetName());
 		bWaitingOnProjectile = true;
 		FTransform t = GetSprite()->GetSocketTransform(WeaponSocketName);
 		AProjectile* projectile = Cast<AProjectile>(GetWorld()->SpawnActor(ActionInProgress.Action->ProjectileClass, &t));
@@ -654,12 +687,38 @@ int32 AGTCharacter::GetMaxHealth() const
 
 int32 AGTCharacter::GetDefense(EAttackType attack) const
 {
-	return Stats->Defense[attack];
+	//return Stats->Defense[attack];
+
+	int32* defense = Stats->Defense.Find(attack);
+	if (defense == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s has incomplete defense map; missing %d %s"), *CharacterName.ToString(), (int)attack, *UGTBFL::AttackToText(attack).ToString());
+		for (auto& elem : Stats->Defense)
+		{
+			UE_LOG(LogTemp, Log, TEXT("   have %s"), *UGTBFL::AttackToText(elem.Key).ToString());
+		}
+		return 0;
+	}
+
+	return *defense;
 }
 
 int32 AGTCharacter::GetAccuracy(EAttackType attack) const
 {
-	return Stats->Accuracy[attack];
+	//return Stats->Accuracy[attack];
+
+	int32* accuracy = Stats->Accuracy.Find(attack);
+	if (accuracy == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s has incomplete accuracy map; missing %d %s"), *CharacterName.ToString(), (int)attack, *UGTBFL::AttackToText(attack).ToString());
+		for (auto& elem : Stats->Accuracy)
+		{
+			UE_LOG(LogTemp, Log, TEXT("   have %s"), *UGTBFL::AttackToText(elem.Key).ToString());
+		}
+		return 0;
+	}
+
+	return *accuracy;
 }
 
 
@@ -820,10 +879,17 @@ bool AGTCharacter::IsSameTeam(ITargetable target)
 TArray<class UActionAttack*> AGTCharacter::GetAllAttacks()
 {
 	TArray<UActionAttack*> attacks;
+
+	if (CharacterData->Weapon.BaseItem)
+	{
+		attacks.Add(UActionWeapon::CreateDefaultAttack(this));
+	}
+
 	if (DefaultMeleeAttack)
 		attacks.Add(DefaultMeleeAttack);
 	if (DefaultRangedAttack)
 		attacks.Add(DefaultRangedAttack);
+
 	//TODO: get weapon attacks
 	//TODO: get skill attacks
 

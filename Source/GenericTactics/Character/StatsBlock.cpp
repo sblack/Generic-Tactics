@@ -6,6 +6,8 @@
 #include "../Feats/Feat.h"
 #include "../Feats/BuffBase.h"
 #include "../Feats/BuffStat.h"
+#include "../Items/ItemEquipment.h"
+#include "../Items/ItemWeapon.h"
 #include "Misc/EnumRange.h"
 
 void UStatsBlock::CalcStats(class UCharacterDataAsset* data)
@@ -141,6 +143,44 @@ void UStatsBlock::FillFromData(class UCharacterDataAsset* data)
 			}
 		}
 		//TODO: buffs from equipment
+		{
+			TArray<FModifiedEquipment> equipment;
+			equipment.Add(data->Weapon);
+			equipment.Add(data->Shield);
+			//TODO armor and accessories
+
+			for (FModifiedEquipment equip : equipment)
+			{
+				if(!equip.BaseItem) continue;
+
+				for (auto& elem : equip.BaseItem->Vitals)
+				{
+					MaxVitals[elem.Key] += elem.Value;
+				}
+
+				//TODO: base stat buffs
+
+				for (auto& elem : equip.BaseItem->Defense)
+				{
+					//if shield or armor, enhancement applies to defense values
+					if(equip.BaseItem->EquipType == EEquipType::Armor || equip.BaseItem->EquipType == EEquipType::Shield)
+						Defense[elem.Key] += elem.Value + equip.Enhancement;
+					else
+						Defense[elem.Key] += elem.Value;
+				}
+
+				for (auto& elem : equip.BaseItem->Accuracy)
+				{
+					Accuracy[elem.Key] += elem.Value;
+				}
+				//TODO: weapons should apply enhancement to appropriate accuracy value
+
+				for (auto& elem : equip.BaseItem->Resist)
+				{
+					Resist[elem.Key] += elem.Value;
+				}
+			}
+		}
 
 		//special handling of Vitals
 		{
@@ -199,5 +239,8 @@ float UStatsBlock::GetVitalRatio(EVitals vital)
 
 FString UStatsBlock::GetVitalRatioString(EVitals vital)
 {
+	//if max vital is 0, character does not have the vital
+	if(MaxVitals[vital] == 0) return TEXT("-- / --");
+
 	return FString::Printf(TEXT("%d / %d"), CurrentVitals[vital], MaxVitals[vital]);
 }

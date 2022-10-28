@@ -135,6 +135,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 		virtual void UpdateFacing() override;
 
+	UFUNCTION(BlueprintCallable)
+		void UpdateWeaponAndShield();
+
 
 
 

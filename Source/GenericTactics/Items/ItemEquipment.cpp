@@ -2,57 +2,67 @@
 
 
 #include "ItemEquipment.h"
+#include "ItemWeapon.h"
+#include "../Combat/CombatEffectDamage.h"
 
-#if WITH_EDITOR
-bool UItemEquipment::CanEditChange(const FProperty* InProperty) const
+//#if WITH_EDITOR
+//bool UItemEquipment::CanEditChange(const FProperty* InProperty) const
+//{
+//	const bool ParentVal = Super::CanEditChange(InProperty);
+//	if (InProperty->GetFName() == FName(TEXT("Defense_Key"), FNAME_Find))
+//	{
+//		return false;
+//	}
+//	if (InProperty->GetFName() == FName(TEXT("Accuracy_Key"), FNAME_Find))
+//	{
+//		return false;
+//	}
+//	if (InProperty->GetFName() == FName(TEXT("Resist_Key"), FNAME_Find))
+//	{
+//		return false;
+//	}
+//
+//	return ParentVal;
+//}
+//#endif
+//
+//void UItemEquipment::PostLoad()
+//{
+//	Super::PostLoad();
+//}
+
+FText FModifiedEquipment::GetName()
 {
-	const bool ParentVal = Super::CanEditChange(InProperty);
-	if (InProperty->GetFName() == FName(TEXT("Defense_Key"), FNAME_Find))
-	{
-		return false;
-	}
-	if (InProperty->GetFName() == FName(TEXT("Accuracy_Key"), FNAME_Find))
-	{
-		return false;
-	}
-	if (InProperty->GetFName() == FName(TEXT("Resist_Key"), FNAME_Find))
-	{
-		return false;
-	}
-	if (InProperty->GetFName() == FName(TEXT("Penetrate_Key"), FNAME_Find))
-	{
-		return false;
-	}
-
-	return ParentVal;
+	if (Enhancement == 0)
+		return BaseItem->Name;
+	else
+		return FText::Format(NSLOCTEXT("Items", "ModEquipName", "{0} (+{1})"), BaseItem->Name, FText::AsNumber(Enhancement));
 }
-#endif
 
-void UItemEquipment::PostLoad()
+TArray<class UCombatEffect*> FModifiedEquipment::GetCombatEffects()
 {
-	Super::PostLoad();
-
-	for (int i = 0; i < 3; i++)
+	TArray<UCombatEffect*> effects;
+	UItemWeapon* baseWeapon = Cast<UItemWeapon>(BaseItem);
+	if (!baseWeapon)
 	{
-		if (!Defense.Contains((EAttackType)i))
-		{
-			Defense.Add((EAttackType)i, 0);
-		}
-		if (!Accuracy.Contains((EAttackType)i))
-		{
-			Accuracy.Add((EAttackType)i, 0);
-		}
+		UE_LOG(LogTemp, Error, TEXT("can't get combat effects from non-weapons"));
+		return effects;
+	}
+	if (!baseWeapon->DamageData)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s is missing damage data"), *baseWeapon->Name.ToString());
+		return effects;
 	}
 
-	for (int i = 0; i < (int)EDamageType::Typeless; i++)
-	{
-		if (!Resist.Contains((EDamageType)i))
-		{
-			Resist.Add((EDamageType)i, 0);
-		}
-		if (!Penetrate.Contains((EDamageType)i))
-		{
-			Penetrate.Add((EDamageType)i, 0);
-		}
-	}
+	UCombatEffectDamage* damage = NewObject<UCombatEffectDamage>();
+	damage->DamageType = baseWeapon->DamageData->DamageType;
+	damage->DiceCount = baseWeapon->DamageData->DiceCount;
+	damage->DiceSides = baseWeapon->DamageData->DiceSides;
+	damage->MinDamage = baseWeapon->DamageData->MinDamage + Enhancement;
+	damage->CalcMaxDamage();
+	effects.Add(damage);
+
+	//TODO: weapon special abilities
+
+	return effects;
 }
