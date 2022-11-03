@@ -18,6 +18,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
 		EAttackType AttackType;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
+		EDefenseType DefenseType;
+
 	virtual void Resolve(TScriptInterface<IActionSourceInterface> source, FVector target) override;
 };
 
@@ -48,8 +51,8 @@ public:
 
 	bool CheckWeaponCompatible(UItemWeapon* weapon);
 
-	UActionAttack* CreateAttack(class AGTCharacter* source);
+	UActionAttack* CreateAttack(class AHumanBase* source);
 
 	/** basic weapon attack */
-	static UActionAttack* CreateDefaultAttack(class AGTCharacter* source);
+	static UActionAttack* CreateDefaultAttack(class AHumanBase* source);
 };

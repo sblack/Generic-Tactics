@@ -4,7 +4,7 @@
 #include "ActionAttack.h"
 #include "CombatManager.h"
 #include "CombatEffect.h"
-#include "../Character/GTCharacter.h"
+#include "../Character/HumanBase.h"
 #include "../Character/CharacterDataAsset.h"
 #include "../Movement/NavGrid.h"
 
@@ -63,7 +63,7 @@ bool UActionWeapon::CheckWeaponCompatible(UItemWeapon* weapon)
 	return true;
 }
 
-UActionAttack* UActionWeapon::CreateAttack(class AGTCharacter* source)
+UActionAttack* UActionWeapon::CreateAttack(class AHumanBase* source)
 {
 	if (!source)
 	{
@@ -98,6 +98,7 @@ UActionAttack* UActionWeapon::CreateAttack(class AGTCharacter* source)
 
 
 	attack->AttackType = baseWeapon->AttackType;
+	attack->DefenseType = baseWeapon->DefenseType;
 	attack->APCost = APCost;
 	attack->VitalCosts = VitalCosts;
 	attack->Particles = Particles;
@@ -107,7 +108,7 @@ UActionAttack* UActionWeapon::CreateAttack(class AGTCharacter* source)
 	return attack;
 }
 
-UActionAttack* UActionWeapon::CreateDefaultAttack(class AGTCharacter* source)
+UActionAttack* UActionWeapon::CreateDefaultAttack(class AHumanBase* source)
 {
 	if (!source)
 	{
@@ -137,6 +138,7 @@ UActionAttack* UActionWeapon::CreateDefaultAttack(class AGTCharacter* source)
 	attack->Effects = weapon.GetCombatEffects();
 
 	attack->AttackType = baseWeapon->AttackType;
+	attack->DefenseType = baseWeapon->DefenseType;
 	attack->APCost = 1;
 
 	return attack;

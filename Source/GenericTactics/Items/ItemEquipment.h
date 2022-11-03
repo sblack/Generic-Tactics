@@ -34,7 +34,7 @@ public:
 		TMap<EVitals, float> Vitals;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Equipment")
-		TMap<EAttackType, float> Defense;
+		TMap<EDefenseType, float> Defense;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Equipment")
 		TMap<EAttackType, float> Accuracy;

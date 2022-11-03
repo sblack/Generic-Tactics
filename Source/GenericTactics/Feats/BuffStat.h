@@ -23,7 +23,7 @@ public:
 		TMap<EVitals, float> MaxVitals;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Buff")
-		TMap<EAttackType, float> Defense;
+		TMap<EDefenseType, float> Defense;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Buff")
 		TMap<EAttackType, float> Accuracy;

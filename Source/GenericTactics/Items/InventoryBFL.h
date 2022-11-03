@@ -22,5 +22,5 @@ public:
 		static FText GetModEquipDamage(struct FModifiedEquipment ModEquip);
 
 	UFUNCTION(BlueprintPure)
-		static FText GetModEquipDefense(struct FModifiedEquipment ModEquip, enum EAttackType AttackType);
+		static FText GetModEquipDefense(struct FModifiedEquipment ModEquip, enum EDefenseType DefenseType);
 };

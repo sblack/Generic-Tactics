@@ -22,10 +22,10 @@ FText UInventoryBFL::GetModEquipDamage(struct FModifiedEquipment ModEquip)
 	return FText::Format(NSLOCTEXT("Items", "ModEquipDamage", "{0}-{1} {2}"), FText::AsNumber(min), FText::AsNumber(max), UGTBFL::DamageToText(weapon->DamageData->DamageType));
 }
 
-FText UInventoryBFL::GetModEquipDefense(struct FModifiedEquipment ModEquip, enum EAttackType AttackType)
+FText UInventoryBFL::GetModEquipDefense(struct FModifiedEquipment ModEquip, enum EDefenseType DefenseType)
 {
-	if (!ModEquip.BaseItem->Defense.Contains(AttackType) || ModEquip.BaseItem->Defense[AttackType] == 0)
+	if (!ModEquip.BaseItem->Defense.Contains(DefenseType) || ModEquip.BaseItem->Defense[DefenseType] == 0)
 		return FText::FromString(TEXT("0"));
 
-	return FText::AsNumber(ModEquip.BaseItem->Defense[AttackType] + ModEquip.Enhancement);
+	return FText::AsNumber(ModEquip.BaseItem->Defense[DefenseType] + ModEquip.Enhancement);
 }

@@ -30,54 +30,17 @@ void AGTCharacter::BeginPlay()
 {
 	UE_LOG(LogTemp, Log, TEXT("BeginPlay Character"));
 
-	if (CharacterData)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Building from Data"));
-
-		CharacterData = UCharacterDataAsset::RandomCopyCharacter(CharacterData, 0);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("Building %s from Scratch"), *GetName());
-		CharacterData = UCharacterDataAsset::NewCharacter();
-
-		if (!IsPartyCharacter())
-		{
-			CharacterData->BodyColorsHSL = CharacterData->BodyColorsHSL.ChangeTeamHue(0, CharacterData->BodyAsset->TeamColors);
-			CharacterData->HatColorsHSL = CharacterData->HatColorsHSL.ChangeTeamHue(0, CharacterData->HatAsset->TeamColors[CharacterData->HatIndex % 10]);
-		}
-	}
-
-	CharacterName = CharacterData->Name;
 	InitMaterials();
 	IDirectionalSpriteInterface::Sprites.Add(this);
-	UpdateWeaponAndShield();
 
 	Stats = NewObject<UStatsBlock>(this, TEXT("Stats"));
-	Stats->FillFromData(CharacterData);
+	SetStats();
 
 	Initiative = RollInitiative();
 	MoveDataID = -1;
 	bIsMyTurn = false;
 
 	Super::BeginPlay();
-
-	if (GetAnimInstance())
-	{
-		if (GetAnimInstance()->GetPlayer())
-		{
-			GetAnimInstance()->GetPlayer()->OnPlaybackSequenceChanged.AddDynamic(this, &AGTCharacter::OnAnimSequenceUpdated);
-			UE_LOG(LogTemp, Log, TEXT("got anim player for %s"), *GetName());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("could not get anim player for %s"), *GetName());
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("could not get anim instance for %s"), *GetName());
-	}
 }
 
 FORCEINLINE class AGTAIController* AGTCharacter::GetTacticsAI()
@@ -93,19 +56,6 @@ AGTCharacter::AGTCharacter(const FObjectInitializer& ObjectInitializer)
 
 	//Stats = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("Stats"));
 	//Equipment = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("Equipment"));
-}
-
-void AGTCharacter::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-	if (IsPendingKill()) return;
-
-	HairSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Hair")));
-	HatFrontSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("HatF")));
-	HatBackSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("HatB")));
-	ShieldSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Shield")));
-	WeaponSprite = Cast<UPaperSpriteComponent>(GetDefaultSubobjectByName(TEXT("Weapon")));
-	HandSprite = Cast<UPaperFlipbookComponent>(GetDefaultSubobjectByName(TEXT("Hand")));
 }
 
 void AGTCharacter::Tick(float DeltaTime)
@@ -150,147 +100,50 @@ void AGTCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 //SPRITES AND COSMETIC
 void AGTCharacter::InitMaterials()
 {
-	BodyDMI = GetSprite()->CreateDynamicMaterialInstance(0);
-	BodyDMI->SetTextureParameterValue(TEXT("Texture"), CharacterData->BodyAsset->Image);
-	FLinearColor skinColor = UGTBFL::HSLtoRGB(CharacterData->SkinColorHSL);
-	BodyDMI->SetVectorParameterValue(TEXT("ColorSkin"), skinColor);
-	UColorQuartetBFL::SetColorQuartetParameter(BodyDMI, UColorQuartetBFL::HSLtoRGBQuartet(CharacterData->BodyColorsHSL));
+	//BodyDMI = GetSprite()->CreateDynamicMaterialInstance(0);
+	//BodyDMI->SetTextureParameterValue(TEXT("Texture"), CharacterData->BodyAsset->Image);
+	//FLinearColor skinColor = UGTBFL::HSLtoRGB(CharacterData->SkinColorHSL);
+	//BodyDMI->SetVectorParameterValue(TEXT("ColorSkin"), skinColor);
 
-	HandDMI = HandSprite->CreateDynamicMaterialInstance(0);
-	if (CharacterData->BodyAsset->HandColor == 4)
-		HandDMI->SetVectorParameterValue(TEXT("Color"), skinColor);
-	else
-		HandDMI->SetVectorParameterValue(TEXT("Color"), UGTBFL::HSLtoRGB(UColorQuartetBFL::GetQuartetMember(CharacterData->BodyColorsHSL, CharacterData->BodyAsset->HandColor)));
-
-	HairDMI = HairSprite->CreateDynamicMaterialInstance(0);
-	if (CharacterData->HairIndex == 255) //bald
-		HairSprite->SetVisibility(false);
-	else
-	{
-		//HairDMI->SetTextureParameterValue(TEXT("Texture"), );
-		HairDMI->SetScalarParameterValue(TEXT("Column"), CharacterData->HairIndex / 5);
-		HairDMI->SetScalarParameterValue(TEXT("Row"), CharacterData->HairIndex % 5);
-		HairDMI->SetVectorParameterValue(TEXT("Color"), UGTBFL::HSLtoRGB(CharacterData->HairColorHSL));
-	}
-
-	HatFrontDMI = HatFrontSprite->CreateDynamicMaterialInstance(0);
-	HatBackDMI = HatBackSprite->CreateDynamicMaterialInstance(0);
-	if (CharacterData->HatIndex == 255) //no hat
-	{
-		HatFrontSprite->SetVisibility(false);
-		HatBackSprite->SetVisibility(false);
-	}
-	else
-	{
-		HatFrontDMI->SetTextureParameterValue(TEXT("Texture"), CharacterData->HatAsset->Image);
-		HatBackDMI->SetTextureParameterValue(TEXT("Texture"), CharacterData->HatAsset->ImageB);
-		HatFrontDMI->SetScalarParameterValue(TEXT("Column"), CharacterData->HatIndex / 5);
-		HatFrontDMI->SetScalarParameterValue(TEXT("Row"), CharacterData->HatIndex % 5);
-		HatBackDMI->SetScalarParameterValue(TEXT("Column"), CharacterData->HatIndex / 5);
-		HatBackDMI->SetScalarParameterValue(TEXT("Row"), CharacterData->HatIndex % 5);
-		FColorQuartet hatColorsRGB = UColorQuartetBFL::HSLtoRGBQuartet(CharacterData->HatColorsHSL);
-		UColorQuartetBFL::SetColorQuartetParameter(HatFrontDMI, hatColorsRGB);
-		UColorQuartetBFL::SetColorQuartetParameter(HatBackDMI, hatColorsRGB);
-	}
-
-	OriginalScale = GetSprite()->GetRelativeScale3D();
+	//OriginalScale = GetSprite()->GetRelativeScale3D();
 }
 
 void AGTCharacter::ResetAttachments()
 {
-
-	FAttachmentTransformRules atr = FAttachmentTransformRules(EAttachmentRule::KeepRelative, true);
-	HairSprite->AttachToComponent(GetSprite(), atr);
-	HatFrontSprite->AttachToComponent(GetSprite(), atr);
-	HatBackSprite->AttachToComponent(GetSprite(), atr);
-
-	WeaponSprite->AttachToComponent(GetSprite(), atr);
-	ShieldSprite->AttachToComponent(GetSprite(), atr);
-
 	UpdateFacing();
 }
 
 void AGTCharacter::UpdateFacing()
 {
 	float diff = FMath::Fmod((GetActorRotation().Yaw - UGameplayStatics::GetPlayerCameraManager(this, 0)->GetCameraRotation().Yaw + 360.0f), 360.0f);
-	float bodyFB, headFB, headFlip;
+	float bodyFB;
 	if (diff < 90) {
-		bodyFB = 2; headFB = 1; headFlip = 1;
-		HeadSocketName = FName(TEXT("Head_2")); ShieldSocketName = FName(TEXT("Shield_2")); WeaponSocketName = FName(TEXT("Weapon_2"));
+		bodyFB = 2;
 	}
 	else if (diff < 180) {
-		bodyFB = 1; headFB = 0; headFlip = -1;
-		HeadSocketName = FName(TEXT("Head_1")); ShieldSocketName = FName(TEXT("Shield_1")); WeaponSocketName = FName(TEXT("Weapon_1"));
+		bodyFB = 1;
 	}
 	else if (diff < 270) {
-		bodyFB = 0; headFB = 0; headFlip = 1;
-		HeadSocketName = FName(TEXT("Head_0")); ShieldSocketName = FName(TEXT("Shield_0")); WeaponSocketName = FName(TEXT("Weapon_0"));
+		bodyFB = 0;
 	}
 	else {
-		bodyFB = 3; headFB = 1; headFlip = -1;
-		HeadSocketName = FName(TEXT("Head_3")); ShieldSocketName = FName(TEXT("Shield_3")); WeaponSocketName = FName(TEXT("Weapon_3"));
+		bodyFB = 3;
 	}
 
 	BodyDMI->SetScalarParameterValue(TEXT("FrontBack"), bodyFB);
-	HandDMI->SetScalarParameterValue(TEXT("FrontBack"), bodyFB);
-	HairDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
-	HatFrontDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
-	HatBackDMI->SetScalarParameterValue(TEXT("FrontBack"), headFB);
-
-	FAttachmentTransformRules atr = FAttachmentTransformRules(EAttachmentRule::KeepRelative, true);
-	HairSprite->AttachToComponent(GetSprite(), atr, HeadSocketName);
-	HatFrontSprite->AttachToComponent(GetSprite(), atr, HeadSocketName);
-	HatBackSprite->AttachToComponent(GetSprite(), atr, HeadSocketName);
-
-	WeaponSprite->AttachToComponent(GetSprite(), atr, WeaponSocketName);
-	ShieldSprite->AttachToComponent(GetSprite(), atr, ShieldSocketName);
-
-	HairSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
-	HatFrontSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
-	HatBackSprite->SetRelativeScale3D(FVector(headFlip, 1, 1));
 
 	UGTBFL::FaceCamera(this, GetSprite());
 }
 
-void AGTCharacter::UpdateWeaponAndShield()
+FTransform AGTCharacter::GetTipTransform()
 {
-	if (CharacterData->Weapon.BaseItem)
-	{
-		WeaponSprite->SetSprite(CharacterData->Weapon.BaseItem->Sprite);
-		WeaponSprite->SetVisibility(true);
-	}
-	else
-	{
-		WeaponSprite->SetVisibility(false);
-	}
-
-	if (CharacterData->Shield.BaseItem)
-	{
-		ShieldSprite->SetSprite(CharacterData->Shield.BaseItem->Sprite);
-		ShieldSprite->SetVisibility(true);
-	}
-	else
-	{
-		ShieldSprite->SetVisibility(false);
-	}
-}
-
-void AGTCharacter::OnAnimSequenceUpdated(const UPaperZDAnimSequence* From, const UPaperZDAnimSequence* To, float CurrentProgress)
-{
-	HandSprite->SetFlipbook(To->GetAnimationData<UPaperFlipbook*>());
-	HandSprite->SetPlaybackPosition(CurrentProgress, false);
-	ResetAttachments();
+	//TODO
+	return GetActorTransform();
 }
 
 void AGTCharacter::SetSpriteColor(FLinearColor color)
 {
 	GetSprite()->SetSpriteColor(color);
-	HairSprite->SetSpriteColor(color);
-	HatBackSprite->SetSpriteColor(color);
-	HatFrontSprite->SetSpriteColor(color);
-	HandSprite->SetSpriteColor(color);
-	WeaponSprite->SetSpriteColor(color);
-	ShieldSprite->SetSpriteColor(color);
 }
 
 
@@ -517,14 +370,7 @@ void AGTCharacter::StartAction()
 	UParticleSystem** partPtr = ActionInProgress.Action->Particles.Find(TEXT("StartTip")); //start of action; tip of weapon
 	if (partPtr != nullptr)
 	{
-		if (WeaponSprite->DoesSocketExist(TEXT("Tip")))
-		{
-			UParticleSystemComponent* psc = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), *partPtr, WeaponSprite->GetSocketTransform(TEXT("Tip")));
-		}
-		else
-		{
-			UParticleSystemComponent* psc = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), *partPtr, GetSprite()->GetSocketTransform(WeaponSocketName));
-		}
+		UParticleSystemComponent* psc = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), *partPtr, GetTipTransform());
 	}
 }
 
@@ -585,31 +431,7 @@ void AGTCharacter::CompleteAction()
 		ANavGrid::Instance->GenerateMoveData(this);
 
 
-	if (CharacterData && !IsPartyCharacter()) //TODO: allow for AI control on Party Characters?
-	{
-		bool bEndTurn = true; //if AI can't perform any objectives, end turn
-		for (int i = 0; i < CharacterData->AIObjectives.Num(); i++)
-		{
-			if (CharacterData->AIObjectives[i]->Attempt(this))
-			{
-				bEndTurn = false;
-				UE_LOG(LogTemp, Log, TEXT("%s successful"), *CharacterData->AIObjectives[i]->GetDebugString());
-				break;
-			}
-			else
-			{
-				UE_LOG(LogTemp, Log, TEXT("%s failed"), *CharacterData->AIObjectives[i]->GetDebugString());
-			}
-		}
-
-		if (bEndTurn)
-		{
-			UE_LOG(LogTemp, Log, TEXT("all objectives impossible, ending turn"));
-
-			FTimerHandle TimerHandle;
-			GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
-		}
-	}
+	AdvanceAI();
 }
 
 void AGTCharacter::QueueAction(FNavPath path, FActionData actionData)
@@ -643,7 +465,7 @@ void AGTCharacter::FireProjectile()
 	{
 		UE_LOG(LogTemp, Log, TEXT("Firing Projectile %s"), *ActionInProgress.Action->ProjectileClass->GetName());
 		bWaitingOnProjectile = true;
-		FTransform t = GetSprite()->GetSocketTransform(WeaponSocketName);
+		FTransform t = GetTipTransform();
 		AProjectile* projectile = Cast<AProjectile>(GetWorld()->SpawnActor(ActionInProgress.Action->ProjectileClass, &t));
 		projectile->Init(ActionInProgress.Action, this, ActionInProgress.Location);
 	}
@@ -685,29 +507,29 @@ int32 AGTCharacter::GetMaxHealth() const
 	return 0;
 }
 
-int32 AGTCharacter::GetDefense(EAttackType attack) const
+int32 AGTCharacter::GetDefense(EDefenseType defense) const
 {
-	//return Stats->Defense[attack];
+	return Stats->Defense[defense];
 
-	int32* defense = Stats->Defense.Find(attack);
-	if (defense == nullptr)
+	/*int32* def = Stats->Defense.Find(defense);
+	if (def == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s has incomplete defense map; missing %d %s"), *CharacterName.ToString(), (int)attack, *UGTBFL::AttackToText(attack).ToString());
+		UE_LOG(LogTemp, Error, TEXT("%s has incomplete defense map; missing %d %s"), *CharacterName.ToString(), (int)defense, *UGTBFL::DefenseToText(defense).ToString());
 		for (auto& elem : Stats->Defense)
 		{
-			UE_LOG(LogTemp, Log, TEXT("   have %s"), *UGTBFL::AttackToText(elem.Key).ToString());
+			UE_LOG(LogTemp, Log, TEXT("   have %s"), *UGTBFL::DefenseToText(elem.Key).ToString());
 		}
 		return 0;
 	}
 
-	return *defense;
+	return *def;*/
 }
 
 int32 AGTCharacter::GetAccuracy(EAttackType attack) const
 {
-	//return Stats->Accuracy[attack];
+	return Stats->Accuracy[attack];
 
-	int32* accuracy = Stats->Accuracy.Find(attack);
+	/*int32* accuracy = Stats->Accuracy.Find(attack);
 	if (accuracy == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s has incomplete accuracy map; missing %d %s"), *CharacterName.ToString(), (int)attack, *UGTBFL::AttackToText(attack).ToString());
@@ -718,7 +540,7 @@ int32 AGTCharacter::GetAccuracy(EAttackType attack) const
 		return 0;
 	}
 
-	return *accuracy;
+	return *accuracy;*/
 }
 
 
@@ -773,31 +595,7 @@ void AGTCharacter::BeginTurn_Implementation()
 		ANavGrid::Instance->GenerateMoveData(this);
 
 
-	if (CharacterData && !IsPartyCharacter()) //TODO: allow for AI control on Party Characters?
-	{
-		bool bEndTurn = true; //if AI can't perform any objectives, end turn
-		for (int i = 0; i < CharacterData->AIObjectives.Num(); i++)
-		{
-			if (CharacterData->AIObjectives[i]->Attempt(this))
-			{
-				bEndTurn = false;
-				UE_LOG(LogTemp, Log, TEXT("%s successful"), *CharacterData->AIObjectives[i]->GetDebugString());
-				break;
-			}
-			else
-			{
-				UE_LOG(LogTemp, Log, TEXT("%s failed"), *CharacterData->AIObjectives[i]->GetDebugString());
-			}
-		}
-
-		if (bEndTurn)
-		{
-			UE_LOG(LogTemp, Log, TEXT("all objectives impossible, ending turn"));
-
-			FTimerHandle TimerHandle;
-			GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
-		}
-	}
+	AdvanceAI();
 }
 
 void AGTCharacter::EndTurn_Implementation()
@@ -834,8 +632,8 @@ int32 AGTCharacter::ApplyDamage(int32 amount, EDamageType damageType, EVitals vi
 		case EVitals::Health:
 			{
 				//TODO: DEATH/DOWN stuff
-				WeaponSprite->SetVisibility(false);
-				ShieldSprite->SetVisibility(false);
+				//WeaponSprite->SetVisibility(false);
+				//ShieldSprite->SetVisibility(false);
 			}
 			break;
 		default:
@@ -879,11 +677,6 @@ bool AGTCharacter::IsSameTeam(ITargetable target)
 TArray<class UActionAttack*> AGTCharacter::GetAllAttacks()
 {
 	TArray<UActionAttack*> attacks;
-
-	if (CharacterData->Weapon.BaseItem)
-	{
-		attacks.Add(UActionWeapon::CreateDefaultAttack(this));
-	}
 
 	if (DefaultMeleeAttack)
 		attacks.Add(DefaultMeleeAttack);

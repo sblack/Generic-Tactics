@@ -30,7 +30,7 @@ public:
 		TMap<ECharStat, int32> Stats;
 
 	UPROPERTY(BlueprintReadWrite)
-		TMap<EAttackType, int32> Defense;
+		TMap<EDefenseType, int32> Defense;
 
 	UPROPERTY(BlueprintReadWrite)
 		TMap<EAttackType, int32> Accuracy;

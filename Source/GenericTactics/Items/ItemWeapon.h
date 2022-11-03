@@ -50,6 +50,9 @@ public:
 		EAttackType AttackType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Weapon")
+		EDefenseType DefenseType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item|Weapon")
 		EActionAnim Anim;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced, Category = "Item|Weapon")

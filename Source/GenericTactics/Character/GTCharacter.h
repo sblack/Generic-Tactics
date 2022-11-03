@@ -43,8 +43,6 @@ public:
 	// Sets default values for this character's properties
 	AGTCharacter(const FObjectInitializer& ObjectInitializer);
 
-	virtual void PostInitializeComponents() override;
-
 	//#if WITH_EDITOR
 	//	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	//#endif
@@ -65,64 +63,21 @@ public:
 
 	//SPRITES AND COSMETIC
 private:
-	/** reference to the hair sprite component in child class */
-	class UPaperSpriteComponent* HairSprite;
 
-	/** reference to the hat front sprite component in child class */
-	class UPaperSpriteComponent* HatFrontSprite;
-
-	/** reference to the hat back sprite component in child class */
-	class UPaperSpriteComponent* HatBackSprite;
-
-	/** reference to the shield sprite component in child class */
-	class UPaperSpriteComponent* ShieldSprite;
-
-	/** reference to the weapon sprite component in child class */
-	class UPaperSpriteComponent* WeaponSprite;
-
-	/** reference to the hand sprite component in child class */
-	class UPaperFlipbookComponent* HandSprite;
-
-	FName HeadSocketName;
-	FName WeaponSocketName;
-	FName ShieldSocketName;
-
-	/** scale of sprite when first spawned; used for flipping left-right */
-	FVector OriginalScale;
-
-	UPROPERTY(EditDefaultsOnly)
-		class UPaperFlipbook* FBIdle;
-
-	UPROPERTY(EditDefaultsOnly)
-		class UPaperFlipbook* FBWalk;
-
-	void InitMaterials();
+	virtual void InitMaterials();
 
 	/** the component attachments seem to bug out if attaching to the socket they already occupy; so detach, then reattach */
 	UFUNCTION(BlueprintCallable)
-		void ResetAttachments();
-
-	UFUNCTION()
-		void OnAnimSequenceUpdated(const class UPaperZDAnimSequence* From, const class UPaperZDAnimSequence* To, float CurrentProgress);
+		virtual void ResetAttachments();
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
 		class UMaterialInstanceDynamic* BodyDMI;
 
-	UPROPERTY(BlueprintReadOnly)
-		class UMaterialInstanceDynamic* HairDMI;
-
-	UPROPERTY(BlueprintReadOnly)
-		class UMaterialInstanceDynamic* HatFrontDMI;
-
-	UPROPERTY(BlueprintReadOnly)
-		class UMaterialInstanceDynamic* HatBackDMI;
-
-	UPROPERTY(BlueprintReadOnly)
-		class UMaterialInstanceDynamic* HandDMI;
-
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
 		void PlayHitAnim(bool bMajor);
+
+	virtual FTransform GetTipTransform();
 
 public:
 	UPROPERTY(BlueprintReadWrite)
@@ -130,13 +85,10 @@ public:
 
 		/**SetSpriteColor for all sprite and flipbook components*/
 	UFUNCTION(BlueprintCallable)
-		void SetSpriteColor(FLinearColor color);
+		virtual void SetSpriteColor(FLinearColor color);
 
 	UFUNCTION(BlueprintCallable)
 		virtual void UpdateFacing() override;
-
-	UFUNCTION(BlueprintCallable)
-		void UpdateWeaponAndShield();
 
 
 
@@ -182,6 +134,9 @@ public:
 private:
 
 	void StartAction();
+	
+protected:
+	virtual void AdvanceAI() {}
 
 public:
 	UPROPERTY(BlueprintReadOnly)
@@ -222,6 +177,8 @@ public:
 
 
 //STATS
+protected:
+	virtual void SetStats() {}
 public:
 	UPROPERTY(Transient, BlueprintReadOnly)
 		class UStatsBlock* Stats;
@@ -230,7 +187,7 @@ public:
 
 	virtual int32 GetMaxHealth() const override;
 
-	virtual int32 GetDefense(EAttackType attack) const;
+	virtual int32 GetDefense(EDefenseType defense) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	int32 GetAccuracy(EAttackType attack) const;
@@ -258,14 +215,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced)
 		class UActionAttack* DefaultRangedAttack;
 
-	
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, meta = (ExposeOnSpawn))
-		class UCharacterDataAsset* CharacterData;
-
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	//	class UCharacterEquipmentComponent* Equipment;
-
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		FText CharacterName;
 
@@ -278,9 +227,6 @@ public:
 
 	UFUNCTION(BlueprintPure)
 		bool IsPartyCharacter() const { return Team == 0; }
-
-	//UFUNCTION(BlueprintPure, Category = "Combat")
-	//	EActionAnim GetActionAnim();
 
 	float GetInitiative() override { return Initiative; }
 
@@ -313,5 +259,5 @@ public:
 	bool IsSameTeam(ITargetable target);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-		TArray<class UActionAttack*> GetAllAttacks();
+		virtual TArray<class UActionAttack*> GetAllAttacks();
 };

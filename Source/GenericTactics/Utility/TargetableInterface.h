@@ -47,7 +47,7 @@ public:
 	virtual void OnHit(bool bMajor);
 
 	UFUNCTION(BlueprintCallable, Category = "Target")
-		virtual int32 GetDefense(EAttackType attack) const { return 0; }
+		virtual int32 GetDefense(EDefenseType defense) const { return 0; }
 
 	virtual void OnHoverStart() {}
 

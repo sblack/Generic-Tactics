@@ -41,9 +41,13 @@ UStatsBlock::UStatsBlock(const FObjectInitializer& ObjectInitializer)
 		Stats.Add(sta, 0);
 	}
 
+	for (EDefenseType def : TEnumRange<EDefenseType>())
+	{
+		Defense.Add(def, 0);
+	}
+
 	for (EAttackType att : TEnumRange<EAttackType>())
 	{
-		Defense.Add(att, 0);
 		Accuracy.Add(att, 0);
 	}
 
@@ -66,9 +70,13 @@ void UStatsBlock::Reset()
 		Stats[sta] = 0;
 	}
 
+	for (EDefenseType def : TEnumRange<EDefenseType>())
+	{
+		Defense[def] = 0;
+	}
+
 	for (EAttackType att : TEnumRange<EAttackType>())
 	{
-		Defense[att] = 0;
 		Accuracy[att] = 0;
 	}
 
@@ -94,10 +102,14 @@ void UStatsBlock::FillFromData(class UCharacterDataAsset* data)
 			scaleVital.Add(vit, 0);
 		}
 		scaleVital[EVitals::Health] = 6;
-		TMap<EAttackType, float> scaleDefense, scaleAccuracy;
+		TMap<EDefenseType, float> scaleDefense;
+		for (EDefenseType def : TEnumRange<EDefenseType>())
+		{
+			scaleDefense.Add(def, 0);
+		}
+		TMap<EAttackType, float> scaleAccuracy;
 		for (EAttackType att : TEnumRange<EAttackType>())
 		{
-			scaleDefense.Add(att, 0);
 			scaleAccuracy.Add(att, 0);
 		}
 		TMap<EDamageType, float> scaleResist;
@@ -153,8 +165,11 @@ void UStatsBlock::FillFromData(class UCharacterDataAsset* data)
 			{
 				if(!equip.BaseItem) continue;
 
+				UE_LOG(LogTemp, Log, TEXT("   stats from %s"), *equip.GetName().ToString());
+
 				for (auto& elem : equip.BaseItem->Vitals)
 				{
+					UE_LOG(LogTemp, Log, TEXT("      %s %d"), *UGTBFL::VitalToText(elem.Key).ToString(), elem.Value);
 					MaxVitals[elem.Key] += elem.Value;
 				}
 
@@ -162,6 +177,7 @@ void UStatsBlock::FillFromData(class UCharacterDataAsset* data)
 
 				for (auto& elem : equip.BaseItem->Defense)
 				{
+					UE_LOG(LogTemp, Log, TEXT("      %s %d"), *UGTBFL::DefenseToText(elem.Key).ToString(), elem.Value);
 					//if shield or armor, enhancement applies to defense values
 					if(equip.BaseItem->EquipType == EEquipType::Armor || equip.BaseItem->EquipType == EEquipType::Shield)
 						Defense[elem.Key] += elem.Value + equip.Enhancement;
@@ -171,12 +187,14 @@ void UStatsBlock::FillFromData(class UCharacterDataAsset* data)
 
 				for (auto& elem : equip.BaseItem->Accuracy)
 				{
+					UE_LOG(LogTemp, Log, TEXT("      %s %d"), *UGTBFL::AttackToText(elem.Key).ToString(), elem.Value);
 					Accuracy[elem.Key] += elem.Value;
 				}
 				//TODO: weapons should apply enhancement to appropriate accuracy value
 
 				for (auto& elem : equip.BaseItem->Resist)
 				{
+					UE_LOG(LogTemp, Log, TEXT("      %s %d"), *UGTBFL::DamageToText(elem.Key).ToString(), elem.Value);
 					Resist[elem.Key] += elem.Value;
 				}
 			}
@@ -213,9 +231,12 @@ void UStatsBlock::FillFromData(class UCharacterDataAsset* data)
 			}
 		}
 
+		for (EDefenseType def : TEnumRange<EDefenseType>())
+		{
+			Defense[def] += (int)(scaleDefense[def] * Level);
+		}
 		for (EAttackType att : TEnumRange<EAttackType>())
 		{
-			Defense[att] += (int)(scaleDefense[att] * Level);
 			Accuracy[att] += (int)(scaleAccuracy[att] * Level);
 		}
 		for (EDamageType dam : TEnumRange<EDamageType>())

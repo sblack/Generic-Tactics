@@ -43,6 +43,17 @@ ENUM_RANGE_BY_FIRST_AND_LAST(EAttackType, EAttackType::Melee, EAttackType::Magic
 ENUM_CLASS_FLAGS(EAttackType);
 
 UENUM(BlueprintType)
+enum class EDefenseType : uint8
+{
+	None = 0 UMETA(Hidden),
+	Armor = 1,
+	Reflex = 2,
+	Fortitude = 3,
+	Will = 4,
+};
+ENUM_RANGE_BY_FIRST_AND_LAST(EDefenseType, EDefenseType::Armor, EDefenseType::Will);
+
+UENUM(BlueprintType)
 enum class ECharStat : uint8
 {
 	Str,
@@ -120,6 +131,7 @@ public:
 	static FText VitalToText(EVitals vital);
 	static FText DamageToText(EDamageType damage);
 	static FText AttackToText(EAttackType attack);
+	static FText DefenseToText(EDefenseType defense);
 	static FText CharStatToText(ECharStat stat);
 	
 };

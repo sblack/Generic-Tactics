@@ -292,7 +292,7 @@ ESuccessLevel UCombatManager::RollAttack(class UActionAttack* action, TScriptInt
 	if (Instance)
 	{
 		//TODO: more in-depth calculations (eg acc bonus based on target, def bonus based on attacker, etc)
-		return Instance->AttackRoll(source->GetAccuracy(action->AttackType), target->GetDefense(action->AttackType));
+		return Instance->AttackRoll(source->GetAccuracy(action->AttackType), target->GetDefense(action->DefenseType));
 	}
 	else
 	{

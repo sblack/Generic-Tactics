@@ -158,6 +158,19 @@ FText UGTBFL::AttackToText(EAttackType attack)
 	}
 }
 
+FText UGTBFL::DefenseToText(EDefenseType defense)
+{
+	switch (defense)
+	{
+	case EDefenseType::Armor:	return NSLOCTEXT("Defense", "Armor", "Armor");
+	case EDefenseType::Reflex:	return NSLOCTEXT("Defense", "Reflex", "Reflex");
+	case EDefenseType::Fortitude:	return NSLOCTEXT("Defense", "Fortitude", "Fortitude");
+	case EDefenseType::Will:	return NSLOCTEXT("Defense", "Will", "Will");
+	default:
+		return FText::FromString("ERROR");
+	}
+}
+
 FText UGTBFL::CharStatToText(ECharStat stat)
 {
 	switch (stat)
