@@ -20,7 +20,7 @@ class GENERICTACTICS_API AMonsterBase : public AGTCharacter
 private:
 	virtual void InitMaterials() override;
 
-protected:
+public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Sprite")
 		FLinearColor Color0;
 
@@ -30,6 +30,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Sprite")
 		FLinearColor Color2;
 
+	/** used for UI */
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Sprite")
+		class UTexture2D* Image;
+
+	UPROPERTY(Transient, BlueprintReadOnly)
+		class UMaterialInstanceDynamic* UIDMI;
 
 
 protected:

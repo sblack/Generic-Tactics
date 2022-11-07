@@ -87,6 +87,10 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		float FinalAP;
 
+	/** if cursor is over UI and should be blocked from actor hovering */
+	UPROPERTY(BlueprintReadWrite)
+		bool bUIBlockHover = false;
+
 		UFUNCTION(BlueprintPure)
 		EPCState GetState() { return PCState; }
 

@@ -16,10 +16,10 @@ class GENERICTACTICS_API UActionAttack : public UActionDirect
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
-		EAttackType AttackType;
+		EAttackType AttackType = EAttackType::Melee;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
-		EDefenseType DefenseType;
+		EDefenseType DefenseType = EDefenseType::Armor;
 
 	virtual void Resolve(TScriptInterface<IActionSourceInterface> source, FVector target) override;
 };

@@ -5,6 +5,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 //#include "../Appearance/ColorQuartetBFL.h"
 #include "../Character/CharacterDataAsset.h"
+#include "../Character/MonsterBase.h"
 #include "../Utility/GTBFL.h"
 #include "Components/Image.h"
 
@@ -28,6 +29,54 @@ void USpriteWidgetCode::SetFromData(class UCharacterDataAsset* Data, uint8 Team)
 	SetBodyColors(UColorQuartetBFL::HSLtoRGBQuartet(Data->BodyColorsHSL));
 	SetHatType(Data->HatIndex, Data->HatAsset->Image, Data->HatAsset->ImageB);
 	SetHatColors(UColorQuartetBFL::HSLtoRGBQuartet(Data->HatColorsHSL));
+
+	Monster->SetVisibility(ESlateVisibility::Hidden);
+	Body->SetVisibility(ESlateVisibility::HitTestInvisible);
+	Hair->SetVisibility(ESlateVisibility::HitTestInvisible);
+	HatFront->SetVisibility(ESlateVisibility::HitTestInvisible);
+	HatBack->SetVisibility(ESlateVisibility::HitTestInvisible);
+}
+
+void USpriteWidgetCode::SetFromMonster(class AMonsterBase* Data, uint8 Team)
+{
+	/*Monster->SetBrushFromTexture(Data->Image);
+	if (!MonsterDMI)
+	{
+		MonsterDMI = UMaterialInstanceDynamic::Create(Monster->GetDynamicMaterial(), GetTransientPackage());
+		Monster->SetBrushFromMaterial(MonsterDMI);
+	}
+
+	if (MonsterDMI)
+	{
+		MonsterDMI->SetVectorParameterValue(TEXT("Color0"), Data->Color0);
+		MonsterDMI->SetVectorParameterValue(TEXT("Color1"), Data->Color1);
+		MonsterDMI->SetVectorParameterValue(TEXT("Color2"), Data->Color2);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("MonsterDMI is still null"));
+	}*/
+
+	if (!Data->UIDMI)
+	{
+		Data->UIDMI = UMaterialInstanceDynamic::Create(MonsterMaterial, GetTransientPackage());
+		if (!Data->UIDMI)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Monster DMI is still null"));
+			return;
+		}
+		Data->UIDMI->SetTextureParameterValue(TEXT("Texture"), Data->Image);
+		Data->UIDMI->SetVectorParameterValue(TEXT("Color0"), Data->Color0);
+		Data->UIDMI->SetVectorParameterValue(TEXT("Color1"), Data->Color1);
+		Data->UIDMI->SetVectorParameterValue(TEXT("Color2"), Data->Color2);
+	}
+	Monster->SetBrushFromMaterial(Data->UIDMI);
+
+	Monster->SetVisibility(ESlateVisibility::HitTestInvisible);
+	Body->SetVisibility(ESlateVisibility::Hidden);
+	Hair->SetVisibility(ESlateVisibility::Hidden);
+	HatFront->SetVisibility(ESlateVisibility::Hidden);
+	HatBack->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void USpriteWidgetCode::SetSkinColor(FLinearColor Value)

@@ -509,9 +509,9 @@ int32 AGTCharacter::GetMaxHealth() const
 
 int32 AGTCharacter::GetDefense(EDefenseType defense) const
 {
-	return Stats->Defense[defense];
+	//return Stats->Defense[defense];
 
-	/*int32* def = Stats->Defense.Find(defense);
+	int32* def = Stats->Defense.Find(defense);
 	if (def == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s has incomplete defense map; missing %d %s"), *CharacterName.ToString(), (int)defense, *UGTBFL::DefenseToText(defense).ToString());
@@ -522,14 +522,14 @@ int32 AGTCharacter::GetDefense(EDefenseType defense) const
 		return 0;
 	}
 
-	return *def;*/
+	return *def;
 }
 
 int32 AGTCharacter::GetAccuracy(EAttackType attack) const
 {
-	return Stats->Accuracy[attack];
+	//return Stats->Accuracy[attack];
 
-	/*int32* accuracy = Stats->Accuracy.Find(attack);
+	int32* accuracy = Stats->Accuracy.Find(attack);
 	if (accuracy == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s has incomplete accuracy map; missing %d %s"), *CharacterName.ToString(), (int)attack, *UGTBFL::AttackToText(attack).ToString());
@@ -540,7 +540,7 @@ int32 AGTCharacter::GetAccuracy(EAttackType attack) const
 		return 0;
 	}
 
-	return *accuracy;*/
+	return *accuracy;
 }
 
 

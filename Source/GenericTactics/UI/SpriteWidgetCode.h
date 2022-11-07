@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(BlueprintReadWrite)
 		class UMaterialInstanceDynamic* HatBackDMI;
 
+	UPROPERTY(BlueprintReadWrite)
+		class UMaterialInstanceDynamic* MonsterDMI;
+
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 		class UImage* Body;
 
@@ -39,6 +42,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 		class UImage* HatBack;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class UImage* Monster;
+
+	UPROPERTY(EditDefaultsOnly)
+		class UMaterial* MonsterMaterial;
+
 	/*virtual void NativePreConstruct() override;
 
 	UFUNCTION(BlueprintCallable)
@@ -48,6 +57,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void SetFromData(class UCharacterDataAsset* Data, uint8 Team);
+
+	UFUNCTION(BlueprintCallable)
+		void SetFromMonster(class AMonsterBase* Data, uint8 Team);
 	
 	UFUNCTION(BlueprintCallable)
 		void SetSkinColor(FLinearColor Value);

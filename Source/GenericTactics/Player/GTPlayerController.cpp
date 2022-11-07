@@ -27,7 +27,7 @@ void AGTPlayerController::PlayerTick(float DeltaTime)
 	FHitResult Hit;
 	GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Camera), false, Hit);
 
-	if (Hit.bBlockingHit)
+	if (Hit.bBlockingHit && !bUIBlockHover)
 	{
 		if (Hit.Actor == nullptr)
 		{
@@ -63,6 +63,10 @@ void AGTPlayerController::PlayerTick(float DeltaTime)
 			if (UCombatManager::IsPreCombat())
 			{
 				UPreCombatUICode::Instance->HoverVoid();
+			}
+			else
+			{
+				UGTHUDCode::Instance->HideTargetInfo();
 			}
 		}
 
