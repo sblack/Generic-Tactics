@@ -290,10 +290,7 @@ void FCharacterData::Randomize()
 		Name = FText::FromStringTable("/Game/Data/Character/NamesFemale", FString::Printf(TEXT("Female_%03d"), FMath::RandRange(0, 255)));
 	}
 
-	float k = FMath::FRandRange(0, 3);
-	if (k < 1) SkinColorHSL = FLinearColor(20, .6 + k * (.375 - .6), .75 + k * (.6 - .75));
-	else if (k < 2) SkinColorHSL = FLinearColor(20 + (k - 1) * (28 - 20), .375 + (k - 1) * (.538 - .375), .6 + (k - 1) * (.325 - .6));
-	else SkinColorHSL = FLinearColor(28 + (k - 2) * (15 - 28), .538 + (k - 2) * (.5 - .538), .325 + (k - 2) * (.2 - .325));
+	SkinColorHSL = UGTBFL::RandomSkinHSL();
 
 	//SkinColorHSL = FLinearColor(20, .375f, .6f);
 	HairColorHSL = FLinearColor(FMath::FRandRange(0, 60), FMath::FRandRange(0, 1),

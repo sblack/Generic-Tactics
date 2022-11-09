@@ -99,6 +99,14 @@ FLinearColor UGTBFL::RGBToHSL(FLinearColor InRGB)
 	return FLinearColor(H, S, L, InRGB.A);
 }
 
+FLinearColor UGTBFL::RandomSkinHSL()
+{
+	float k = FMath::FRandRange(0, 3);
+	if (k < 1) return FLinearColor(20, .6 + k * (.375 - .6), .75 + k * (.6 - .75));
+	else if (k < 2) return FLinearColor(20 + (k - 1) * (28 - 20), .375 + (k - 1) * (.538 - .375), .6 + (k - 1) * (.325 - .6));
+	else return FLinearColor(28 + (k - 2) * (15 - 28), .538 + (k - 2) * (.5 - .538), .325 + (k - 2) * (.2 - .325));
+}
+
 UEnum* UGTBFL::Vitals()
 {
 	if (VitalsPtr == nullptr)

@@ -124,6 +124,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Utilities|Color", meta = (DisplayName = "RGB to HSL"))
 		static FLinearColor RGBToHSL(FLinearColor InRGB);
 
+	UFUNCTION(BlueprintPure, Category = "Utilities|Color")
+		static FLinearColor RandomSkinHSL();
+
 	static UEnum* Vitals();
 	static UEnum* Damage();
 

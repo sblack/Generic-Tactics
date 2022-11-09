@@ -20,14 +20,19 @@ class GENERICTACTICS_API AMonsterBase : public AGTCharacter
 private:
 	virtual void InitMaterials() override;
 
+protected:
+	/** for monsters that should have color variation (eg skin color) */
+	UFUNCTION(BlueprintImplementableEvent)
+	void AlterColors();
+
 public:
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Sprite")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sprite")
 		FLinearColor Color0;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Sprite")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sprite")
 		FLinearColor Color1;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Sprite")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sprite")
 		FLinearColor Color2;
 
 	/** used for UI */

@@ -7,6 +7,7 @@
 
 void AMonsterBase::InitMaterials()
 {
+	AlterColors();
 	BodyDMI = GetSprite()->CreateDynamicMaterialInstance(0);
 	BodyDMI->SetVectorParameterValue(TEXT("Color0"), Color0);
 	BodyDMI->SetVectorParameterValue(TEXT("Color1"), Color1);
