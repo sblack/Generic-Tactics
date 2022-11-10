@@ -6,10 +6,6 @@
 
 DEFINE_LOG_CATEGORY(LogHighlight);
 
-FLinearColor UHighlightManager::PathColor = FLinearColor(1, 1, 0); // yellow
-FLinearColor UHighlightManager::ReachColor = FLinearColor(0, .5f, 1); // cyan-blue
-FLinearColor UHighlightManager::TargetColor = FLinearColor(1, 1, 0); // yellow
-
 void UHighlightManager::Init()
 {
 	HighlightTexture = UTexture2D::CreateTransient(TextureSize, TextureSize);

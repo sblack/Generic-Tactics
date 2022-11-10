@@ -56,6 +56,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Stats")
 		TMap<EDamageType, int32> Resist;
 
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Stats", meta = (ClampMin = 1))
+		uint8 MaxActions = 3;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Stats", meta = (ClampMin = 1))
+		uint8 MoveSpeed = 5;
+
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Stats")
 		int32 DetectionRadius = 2;
 

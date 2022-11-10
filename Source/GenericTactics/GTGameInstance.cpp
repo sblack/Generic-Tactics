@@ -26,6 +26,12 @@ void UGTGameInstance::Shutdown()
 	Super::Shutdown();
 }
 
+FLinearColor UGTGameInstance::GetReachColor(uint8 index)
+{
+	if (index >= ReachColors.Num()) return FLinearColor::Transparent;
+	return ReachColors[index];
+}
+
 void UGTGameInstance::LoadData()
 {
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");

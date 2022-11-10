@@ -124,11 +124,6 @@ void AGTPlayerController::CancelTarget()
 	UGTHUDCode::Instance->RestoreCommandMenu();
 }
 
-void AGTPlayerController::UpdateFinalAP(float apCost)
-{
-	FinalAP = ActiveCharacter->CurrentAP - apCost;
-}
-
 AGTPlayerController::AGTPlayerController()
 {
 	bShowMouseCursor = true;
@@ -254,13 +249,13 @@ void AGTPlayerController::OnLeftClickUpCombat()
 			if (ActiveCharacter->GetPathTo(SelectedLocation, NavPath))
 			{
 				bHavePath = true;
-				FinalAP = ActiveCharacter->CurrentAP - NavPath.Cost;
+				FinalRemainingActions = ActiveCharacter->RemainingActions - NavPath.ActCost;
 				//UE_LOG(LogGTPlayerController, Log, TEXT("LCUC: Path Found"));
 			}
 			else
 			{
 				bHavePath = false;
-				FinalAP = ActiveCharacter->CurrentAP;
+				FinalRemainingActions = ActiveCharacter->RemainingActions;
 				ANavGrid::Instance->ClearPath();
 				//UE_LOG(LogGTPlayerController, Log, TEXT("LCUC: No Path"));
 			}
@@ -385,13 +380,13 @@ void AGTPlayerController::MouseOverTerrain(FVector location)
 					if (ActiveCharacter->GetPathTo(HoverLocation, NavPath))
 					{
 						bHavePath = true;
-						FinalAP = ActiveCharacter->CurrentAP - NavPath.Cost;
+						FinalRemainingActions = ActiveCharacter->RemainingActions - NavPath.ActCost;
 						//UE_LOG(LogGTPlayerController, Log, TEXT("MOT: Path Found"));
 					}
 					else
 					{
 						bHavePath = false;
-						FinalAP = ActiveCharacter->CurrentAP;
+						FinalRemainingActions = ActiveCharacter->RemainingActions;
 						ANavGrid::Instance->ClearPath();
 						//UE_LOG(LogGTPlayerController, Log, TEXT("MOT: No Path"));
 					}

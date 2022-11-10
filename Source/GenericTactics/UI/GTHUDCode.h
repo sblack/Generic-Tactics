@@ -24,8 +24,13 @@ protected:
 	int MessageCount = 0;
 	int TopMessage = 0;
 
+	FString DebugMessages[5];
+
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 		class URichTextBlock* CombatLog;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		class UTextBlock* DebugLog;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 		class UInitiativeTrackCode* InitiativeTrack;
@@ -85,8 +90,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "UI|HUD")
 		void ShowMoveCommand();
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Debug")
-		void UpdateDebugText(const FString & text);
+	UFUNCTION(BlueprintCallable, Category = "Debug")
+		void UpdateDebugText(const FString & text, int32 line = 0);
 
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 		void LogCombatMessage(FText text);

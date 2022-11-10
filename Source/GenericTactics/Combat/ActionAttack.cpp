@@ -99,7 +99,7 @@ UActionAttack* UActionWeapon::CreateAttack(class AHumanBase* source)
 
 	attack->AttackType = baseWeapon->AttackType;
 	attack->DefenseType = baseWeapon->DefenseType;
-	attack->APCost = APCost;
+	attack->ActionCost = ActionCost;
 	attack->VitalCosts = VitalCosts;
 	attack->Particles = Particles;
 	attack->Sounds = Sounds;
@@ -139,7 +139,6 @@ UActionAttack* UActionWeapon::CreateDefaultAttack(class AHumanBase* source)
 
 	attack->AttackType = baseWeapon->AttackType;
 	attack->DefenseType = baseWeapon->DefenseType;
-	attack->APCost = 1;
 
 	return attack;
 }

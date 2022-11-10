@@ -33,9 +33,6 @@ protected:
 	float borderVals[32];
 
 public:
-	static FLinearColor PathColor;
-	static FLinearColor ReachColor;
-	static FLinearColor TargetColor;
 
 	UPROPERTY()
 		class UTexture2D* HighlightTexture;

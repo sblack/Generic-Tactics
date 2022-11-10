@@ -12,6 +12,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "NavigationSystem/Public/NavigationSystem.h"
 #include "TileHighlight.h"
+#include "../GTGameInstance.h"
 
 DEFINE_LOG_CATEGORY(LogNavGrid);
 
@@ -151,7 +152,7 @@ void ANavGrid::ScanTile(int ix, int iy)
 		if (rt == ERegionTypes::Start
 			&& HighlightManager)
 		{
-			HighlightManager->SetTileColor(loc, UHighlightManager::TargetColor);
+			HighlightManager->SetTileColor(loc, UGTGameInstance::Instance->TargetColor);
 		}
 	}
 
@@ -373,7 +374,8 @@ void ANavGrid::GenerateMoveData(class AGTCharacter* character)
 	character->MoveGrid.Empty();
 	Fringe.Empty();
 
-	float maxCost = character->CurrentAP;
+	float maxCost = character->RemainingMove + character->RemainingActions * character->GetMoveSpeed();
+	UE_LOG(LogNavGrid, Log, TEXT("GMD: %f + %d x %f = %f"), character->RemainingMove, character->RemainingActions, character->GetMoveSpeed(), maxCost);
 
 	FVector start = character->GetActorLocation() - FVector(0, 0, character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 	UE_LOG(LogNavGrid, Log, TEXT("GMD: starting from %s"), *start.ToString());
@@ -445,29 +447,36 @@ void ANavGrid::GenerateMoveData(class AGTCharacter* character)
 			AddNeighbors(data, maxCost, character);
 	}
 
-	/*for (int i = 0; i < controller->MoveGrid.Num(); i++)
+	for (int i = 0; i < character->MoveGrid.Num(); i++)
 	{
-		for (int j = 0; j < controller->MoveGrid[i].Num(); j++)
+		for (int j = 0; j < character->MoveGrid[i].Num(); j++)
 		{
-			UE_LOG(LogNavGrid, Log, TEXT("%s"), *controller->MoveGrid[i][j].Location.ToCompactString());
+			character->MoveGrid[i][j].ActionCost = FMath::RoundToPositiveInfinity((character->MoveGrid[i][j].TotalCost - character->RemainingMove) / character->GetMoveSpeed());
+			GetGridDataPtr(character->MoveGrid[i][j].Location)->ActCost = character->MoveGrid[i][j].ActionCost;
 		}
+	}
+
+	/*for (int i = 0; i < character->MoveGrid.Num(); i++)
+	{
+		FString line;
+		for (int j = 0; j < character->MoveGrid[i].Num(); j++)
+		{
+			character->MoveGrid[i][j].ActionCost = FMath::RoundToPositiveInfinity((character->MoveGrid[i][j].TotalCost - character->RemainingMove) / character->GetMoveSpeed());
+			GetGridDataPtr(character->MoveGrid[i][j].Location)->ActCost = character->MoveGrid[i][j].ActionCost;
+			line += FString::FromInt(character->MoveGrid[i][j].ActionCost) + " ";
+		}
+		UE_LOG(LogNavGrid, Log, TEXT("%s"), *line);
+	}
+	UE_LOG(LogNavGrid, Log, TEXT("---------------"));
+	for (int j = 10; j < 22; j++)
+	{
+		FString line;
+		for (int i = 10; i < 22; i++)
+		{
+			line += FString::FromInt(Grid[i][j].ActCost) + " ";
+		}
+		UE_LOG(LogNavGrid, Log, TEXT("%s"), *line);
 	}*/
-
-	//double time = (double)(clock() - startTime) / CLOCKS_PER_SEC * 1000.0;
-	//UE_LOG(LogNavGrid, Log, TEXT("Generated MoveData: %f"), time);
-
-	/*int count = 0;
-	for (int i = 0; i < controller->MoveGrid.Num(); i++)
-	{
-	count += controller->MoveGrid[i].Num();
-
-	for (int j = 0; j < controller->MoveGrid[i].Num(); j++)
-	{
-	DrawDebugLine(GetWorld(), controller->MoveGrid[i][j].Origin, controller->MoveGrid[i][j].Location, FColor::Red, false, 2);
-	}
-	}
-
-	UE_LOG(LogNavGrid, Log, TEXT("Generated MoveData for %s: %d %d nodes"), *controller->GetName(), controller->MoveGrid.Num(), count);*/
 }
 
 void ANavGrid::ShowMoveRange(class AGTCharacter* character)
@@ -476,7 +485,7 @@ void ANavGrid::ShowMoveRange(class AGTCharacter* character)
 	{
 		ShowMoveRange(nullptr);
 
-		float maxCost = 5;// controller->GetTacticsCharacter()->CurrentAP;
+		float maxCost = character->RemainingMove + character->RemainingActions * character->GetMoveSpeed();
 
 		GenerateMoveData(character);
 		for (int i = 0; i < character->MoveGrid.Num(); i++)
@@ -501,7 +510,7 @@ void ANavGrid::ShowMoveRange(class AGTCharacter* character)
 
 				
 
-				HighlightManager->SetTileColor(gridData->Location, UHighlightManager::ReachColor);
+				HighlightManager->SetTileColor(gridData->Location, UGTGameInstance::Instance->GetReachColor(character->MoveGrid[i][j].ActionCost));
 			}
 		}
 	}
@@ -519,13 +528,13 @@ void ANavGrid::ShowPath(TArray<FVector>& path)
 {
 	for (int i = 0; i < PathPoints.Num(); i++)
 	{
-		HighlightManager->SetTileColor(PathPoints[i], UHighlightManager::ReachColor);
+		HighlightManager->SetTileColor(PathPoints[i], UGTGameInstance::Instance->GetReachColor(GetGridData(PathPoints[i]).ActCost));
 	}
 	PathPoints = path;
 
 	for (int i = 0; i < PathPoints.Num(); i++)
 	{
-		HighlightManager->SetTileColor(PathPoints[i], UHighlightManager::PathColor);
+		HighlightManager->SetTileColor(PathPoints[i], UGTGameInstance::Instance->PathColor);
 	}
 }
 
@@ -533,7 +542,7 @@ void ANavGrid::ClearPath()
 {
 	for (int i = 0; i < PathPoints.Num(); i++)
 	{
-		HighlightManager->SetTileColor(PathPoints[i], UHighlightManager::ReachColor);
+		HighlightManager->SetTileColor(PathPoints[i], UGTGameInstance::Instance->GetReachColor(GetGridData(PathPoints[i]).ActCost));
 	}
 	PathPoints.Empty();
 }
@@ -663,7 +672,7 @@ void ANavGrid::ShowTargeting(FVector source, float range)
 	ShowMoveRange(nullptr);
 	for (int i = 0; i < targetable.Num(); i++)
 	{
-		HighlightManager->SetTileColor(targetable[i], UHighlightManager::TargetColor);
+		HighlightManager->SetTileColor(targetable[i], UGTGameInstance::Instance->TargetColor);
 	}
 }
 
@@ -675,7 +684,7 @@ void ANavGrid::ShowTargetingArea(IActionSource source, FVector target, class UAc
 	bool bValidTarget = false;
 	for (int i = 0; i < targetable.Num(); i++)
 	{
-		HighlightManager->SetTileColor(targetable[i], UHighlightManager::ReachColor);
+		HighlightManager->SetTileColor(targetable[i], UGTGameInstance::Instance->ReachColors[1]);
 		if (targetable[i] == target)
 			bValidTarget = true;
 	}
@@ -684,7 +693,7 @@ void ANavGrid::ShowTargetingArea(IActionSource source, FVector target, class UAc
 	{
 		TArray<FVector> area = action->GetAffectedArea(source, target);
 		for (int i = 0 ; i < area.Num(); i++)
-			HighlightManager->SetTileColor(area[i], UHighlightManager::TargetColor);
+			HighlightManager->SetTileColor(area[i], UGTGameInstance::Instance->TargetColor);
 	}
 }
 

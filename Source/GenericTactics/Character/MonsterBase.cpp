@@ -60,6 +60,8 @@ void AMonsterBase::SetStats()
 			Stats->Resist[dam] = 0;
 	}
 
+	Stats->MaxActions = MaxActions;
+	Stats->MoveSpeed = MoveSpeed;
 	Stats->DetectionRadius = DetectionRadius;
 }
 

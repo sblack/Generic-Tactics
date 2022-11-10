@@ -2,9 +2,26 @@
 
 
 #include "GTHUDCode.h"
+#include "Components/TextBlock.h"
 #include "Components/RichTextBlock.h"
 
 UGTHUDCode* UGTHUDCode::Instance;
+
+void UGTHUDCode::UpdateDebugText(const FString& text, int32 line /*= 0*/)
+{
+	if (line < 0 || line >= 5) line = 0;
+
+	DebugMessages[line] = text;
+
+
+	FString temp = DebugMessages[0];
+	for (int i = 1; i < 5; i++)
+	{
+		temp = temp + "\n" + DebugMessages[i];
+	}
+
+	DebugLog->SetText(FText::FromString(temp));
+}
 
 void UGTHUDCode::LogCombatMessage(FText text)
 {

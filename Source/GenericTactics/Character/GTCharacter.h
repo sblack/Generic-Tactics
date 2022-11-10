@@ -128,6 +128,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void TurnToFace(FVector target);
 
+	UFUNCTION(BlueprintPure)
+		float GetMoveSpeed();
+
 
 
 	//ACTIONS
@@ -218,8 +221,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		FText CharacterName;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-		float CurrentAP;
+	UPROPERTY(BlueprintReadOnly, Transient)
+		uint8 RemainingActions;
+
+	UPROPERTY(BlueprintReadOnly, Transient)
+		float RemainingMove;
 
 	/** 0 = player */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)

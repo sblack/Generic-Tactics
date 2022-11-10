@@ -25,6 +25,7 @@ public:
 	ITargetable Occupant = nullptr;
 	class ATileHighlight* Tile = nullptr;
 	ERegionTypes RegionType = ERegionTypes::None;
+	uint8 ActCost = 255;
 
 	FGridData(): RegionType(ERegionTypes::Void) {}
 	FGridData(FVector loc) : Location(loc), bStaticObstruction(true) {}
@@ -56,6 +57,9 @@ public:
 	/** Total Cost to Tile */
 	UPROPERTY(BlueprintReadOnly)
 		float TotalCost;
+
+	UPROPERTY(BlueprintReadOnly)
+		uint8 ActionCost;
 
 	UPROPERTY()
 		bool Occupied;
@@ -109,9 +113,10 @@ struct FNavPath
 public:
 	TArray<FVector> Path;
 	float Cost = 0;
+	uint8 ActCost = 0;
 
 	FNavPath() {}
-	FNavPath(TArray<FVector> path, float cost) : Path(path), Cost(cost) {}
+	FNavPath(TArray<FVector> path, float cost) : Path(path), Cost(cost) {} //is this constructor still used?
 
 	void Empty() { Path.Empty(); Cost = 0; }
 };

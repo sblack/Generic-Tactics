@@ -226,7 +226,7 @@ const FNodeData* AGTCharacter::FindMoveData(FVector vec) const
 
 bool AGTCharacter::GetPathTo(FVector destination, FNavPath& path)
 {
-	UE_LOG(LogTemp, Log, TEXT("%s GetPathTo %s"), *GetName(), *destination.ToString());
+	//UE_LOG(LogTemp, Log, TEXT("%s GetPathTo %s"), *GetName(), *destination.ToString());
 	destination = ANavGrid::Instance->AlignToGrid(destination);
 	const FNodeData* data = FindMoveData(destination);
 	if (data == nullptr)
@@ -239,6 +239,9 @@ bool AGTCharacter::GetPathTo(FVector destination, FNavPath& path)
 
 	path.Path.Emplace(destination);
 	path.Cost = data->TotalCost;
+	path.ActCost = data->ActionCost;
+	if (IsPartyCharacter())
+		UGTHUDCode::Instance->UpdateDebugText(FString::Printf(TEXT("cost %f\tacts %d"), data->TotalCost, data->ActionCost), 2);
 
 	int sanity = 0;
 	while (data->TotalCost != 0)
@@ -268,7 +271,16 @@ bool AGTCharacter::GetPathTo(FVector destination, FNavPath& path)
 
 void AGTCharacter::StartMoving(FNavPath path)
 {
-	CurrentAP -= path.Cost;
+	if (path.ActCost == 0)
+	{
+		RemainingMove -= path.Cost;
+	}
+	else
+	{
+		RemainingMove = RemainingMove + Stats->MoveSpeed * path.ActCost - path.Cost;
+		RemainingActions -= path.ActCost;
+	}
+
 	bIsMoving = true;
 	MoveTimePassed = 0;
 	MoveSteps.Empty(path.Path.Num() - 1);
@@ -292,13 +304,14 @@ TArray<FNodeData> AGTCharacter::GetReachableArea()
 		return result;
 	}
 	ANavGrid::Instance->GenerateMoveData(this);
+	float maxMove = RemainingMove + RemainingActions * Stats->MoveSpeed;
 
 	for (int i = 0; i < MoveGrid.Num(); i++)
 	{
 		for (int j = 0; j < MoveGrid[i].Num(); j++)
 		{
 
-			if (!MoveGrid[i][j].Occupied && MoveGrid[i][j].TotalCost <= CurrentAP)
+			if (!MoveGrid[i][j].Occupied && MoveGrid[i][j].TotalCost <= maxMove)
 				result.Add(MoveGrid[i][j]);
 		}
 	}
@@ -338,8 +351,6 @@ FNodeData AGTCharacter::NearestReachableLocationToTarget(FVector target, float r
 	return location;
 }
 
-
-
 void AGTCharacter::TurnToFace(FVector target)
 {
 	//FVector direction = (target - GetActorLocation()) * FVector(1, 1, 0);
@@ -354,11 +365,23 @@ void AGTCharacter::TurnToFace(FVector target)
 	UGTBFL::FaceCamera(this, GetSprite());
 }
 
+float AGTCharacter::GetMoveSpeed()
+{
+	return Stats->MoveSpeed;
+}
+
+
+
+
 //ACTIONS
 void AGTCharacter::StartAction()
 {
 	if(!ActionInProgress.Action) return;
 	UE_LOG(LogTemp, Log, TEXT("Starting %s"), *ActionInProgress.Action->Name.ToString());
+
+	RemainingActions -= ActionInProgress.Action->ActionCost;
+	RemainingMove = 0;
+	//TODO: actions that include movement as part of them (eg Charge)?
 
 	//making sure this is not still set. Will be set when the projectile is fired
 	bWaitingOnProjectile = false;
@@ -430,8 +453,13 @@ void AGTCharacter::CompleteAction()
 	else
 		ANavGrid::Instance->GenerateMoveData(this);
 
-
-	AdvanceAI();
+	if (RemainingActions == 0 && RemainingMove < 1)
+	{
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
+	}
+	else
+		AdvanceAI();
 }
 
 void AGTCharacter::QueueAction(FNavPath path, FActionData actionData)
@@ -479,7 +507,7 @@ void AGTCharacter::Meditate()
 		Stats->CurrentVitals[EVitals::Mana] = Stats->MaxVitals[EVitals::Mana];
 	}
 
-	CurrentAP -= 3;
+	RemainingActions -= 2;
 
 	CompleteAction();
 }
@@ -549,6 +577,7 @@ int32 AGTCharacter::GetAccuracy(EAttackType attack) const
 
 
 
+
 void AGTCharacter::BeginTurn_Implementation()
 {
 	UE_LOG(LogTemp, Log, TEXT("Begin Turn %s"), *GetName());
@@ -558,10 +587,9 @@ void AGTCharacter::BeginTurn_Implementation()
 		EndTurn();
 		return;
 	}*/
-	CurrentAP = 5;
-	/*CurrentAP += Stats->MaxAP.TotalValue;
-	if (CurrentAP > Stats->MaxAP.TotalValue * 1.5f)
-		CurrentAP = Stats->MaxAP.TotalValue * 1.5f;*/
+	
+	RemainingActions = Stats->MaxActions;
+	RemainingMove = 0;
 
 	bIsMyTurn = true;
 	if (ANavGrid::Instance == nullptr)

@@ -41,10 +41,21 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		TArray<class UItemEquipment*> Equipment;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Highlight Color")
+		FLinearColor PathColor;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Highlight Color")
+		FLinearColor TargetColor;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Highlight Color")
+		TArray<FLinearColor> ReachColors;
+
 	UFUNCTION(BlueprintPure)
 		static UGTGameInstance* GetGTGameInstance() { return Instance; }
 
 	virtual void Init() override;
 
 	virtual void Shutdown() override;
+
+	FLinearColor GetReachColor(uint8 index);
 };

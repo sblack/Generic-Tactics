@@ -87,6 +87,9 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		float FinalAP;
 
+	UPROPERTY(BlueprintReadOnly)
+		uint8 FinalRemainingActions;
+
 	/** if cursor is over UI and should be blocked from actor hovering */
 	UPROPERTY(BlueprintReadWrite)
 		bool bUIBlockHover = false;
@@ -112,7 +115,4 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Player")
 		void CancelTarget();
-
-	UFUNCTION(BlueprintCallable, Category = "Player")
-		void UpdateFinalAP(float apCost);
 };

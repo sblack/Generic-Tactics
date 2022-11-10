@@ -34,8 +34,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Targeting")
 		float Range;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cost")
-		float APCost;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cost", meta = (ClampMin = 1, ClampMax = 3))
+		uint8 ActionCost = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cost")
 		TMap<EVitals, int32> VitalCosts;

@@ -38,6 +38,12 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		TMap<EDamageType, int32> Resist;
 
+	UPROPERTY(BlueprintReadWrite)
+		uint8 MaxActions = 3;
+
+	UPROPERTY(BlueprintReadWrite)
+		uint8 MoveSpeed = 5;
+
 	UPROPERTY(BlueprintReadOnly)
 	int32 DetectionRadius = 2;
 
