@@ -14,6 +14,7 @@
 #include "../Player/GTPlayerController.h"
 #include "../UI/GTHUDCode.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "PaperFlipbookComponent.h"
 #include "PaperSpriteComponent.h"
@@ -56,6 +57,9 @@ AGTCharacter::AGTCharacter(const FObjectInitializer& ObjectInitializer)
 
 	//Stats = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("Stats"));
 	//Equipment = CreateDefaultSubobject<UCharacterEquipmentComponent>(TEXT("Equipment"));
+
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Block);
 }
 
 void AGTCharacter::Tick(float DeltaTime)
@@ -81,6 +85,17 @@ void AGTCharacter::Tick(float DeltaTime)
 			else
 				SetActorLocation(MoveSteps[0].CalcPosition(MoveTimePassed));
 		}
+	}
+	else if (LungeTime >= 0)
+	{
+		LungeTime -= DeltaTime;
+		if (LungeTime < 0)
+			SetActorLocation(PreLungePosition);
+		else
+		{
+			SetActorLocation(FMath::Lerp(PreLungePosition, LungeDestination, 4 * LungeTime * (1 - LungeTime)));
+		}
+		UGTBFL::FaceCamera(this, GetSprite());
 	}
 }
 
@@ -279,6 +294,12 @@ void AGTCharacter::StartMoving(FNavPath path)
 	{
 		RemainingMove = RemainingMove + Stats->MoveSpeed * path.ActCost - path.Cost;
 		RemainingActions -= path.ActCost;
+
+		if (RemainingActions > 200)
+		{
+			UE_LOG(LogTemp, Error ,TEXT("RemainingActions > 200; path.ActCost = %d\nsetting RemainingActions to 0"), path.ActCost);
+			RemainingActions = 0;
+		}
 	}
 
 	bIsMoving = true;
@@ -373,13 +394,38 @@ float AGTCharacter::GetMoveSpeed()
 
 
 
+void AGTCharacter::StartLunge()
+{
+	if (LungeTime < 0) //not currently lunging
+	{
+		LungeTime = 1;
+		PreLungePosition = GetActorLocation();
+		//LungeDestination = PreLungePosition + GetActorForwardVector() * 50; //half a square
+		LungeDestination = (ActionInProgress.Location + PreLungePosition) / 2;
+		UE_LOG(LogTemp,Log, TEXT("Lunge:\n from: %s\n   to: %s\n targ: %s"), *PreLungePosition.ToString(), *LungeDestination.ToString(), *ActionInProgress.Location.ToString());
+	}
+	//if currently lunging, starting a new lunge may mess things up
+	//shouldn't happen anyway
+}
+
 //ACTIONS
 void AGTCharacter::StartAction()
 {
-	if(!ActionInProgress.Action) return;
+	if (!ActionInProgress.Action) return;
 	UE_LOG(LogTemp, Log, TEXT("Starting %s"), *ActionInProgress.Action->Name.ToString());
+	if (RemainingActions == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("RemainingActions == 0; cannot start action"));
+		CompleteAction();
+		return;
+	}
 
 	RemainingActions -= ActionInProgress.Action->ActionCost;
+	if (RemainingActions > 200)
+	{
+		UE_LOG(LogTemp, Error, TEXT("RemainingActions > 200; Action Cost = %d\nsetting RemainingActions to 0"), ActionInProgress.Action->ActionCost);
+		RemainingActions = 0;
+	}
 	RemainingMove = 0;
 	//TODO: actions that include movement as part of them (eg Charge)?
 
@@ -387,6 +433,8 @@ void AGTCharacter::StartAction()
 	bWaitingOnProjectile = false;
 
 	SetActorRotation(((ActionInProgress.Location - GetActorLocation()) * FVector(1, 1, 0)).ToOrientationRotator());
+	UpdateFacing();
+	UGTBFL::FaceCamera(this, GetSprite());
 	//PlayActionAnim(ActionInProgress.Action->Anim);
 	GetAnimInstance()->JumpToNode(TEXT("Action"));
 
@@ -437,7 +485,16 @@ void AGTCharacter::ResolveAction()
 
 void AGTCharacter::CompleteAction()
 {
-	if(bWaitingOnProjectile) return;
+	if(bWaitingOnProjectile)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Waiting on Projectile"));
+		if(ActionInProgress.Action && !ActionInProgress.Action->ProjectileClass)
+		{
+			UE_LOG(LogTemp,Error, TEXT("Waiting on Projectile that never existed"));
+		}
+
+		return;
+	}
 
 	if(ActionInProgress.Action)
 		UE_LOG(LogTemp, Log, TEXT("Completing %s"), *ActionInProgress.Action->Name.ToString());
@@ -580,7 +637,7 @@ int32 AGTCharacter::GetAccuracy(EAttackType attack) const
 
 void AGTCharacter::BeginTurn_Implementation()
 {
-	UE_LOG(LogTemp, Log, TEXT("Begin Turn %s"), *GetName());
+	UE_LOG(LogTemp, Log, TEXT("\n----------\nBegin Turn %s\n----------"), *GetName());
 	/*if (bDead)
 	{
 		UE_LOG(LogTemp, Log, TEXT("%s is dead, ending turn"), *GetName());

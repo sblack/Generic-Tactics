@@ -44,6 +44,7 @@ void ANavGrid::BeginPlay()
 	IntSpace = (int)Spacing;
 	IntHalfSpace = IntSpace / 2;
 	Spacing = (float)IntSpace;
+	UE_LOG(LogNavGrid, Log, TEXT("   Spacing\t%f"), Spacing);
 
 	TArray<AActor*> temp;
 
@@ -342,8 +343,8 @@ float ANavGrid::GetCost(FVector target, FVector direction, const class AGTCharac
 
 float ANavGrid::GetDistance(FVector vector)
 {
-	int x = vector.X / IntSpace; if (x < 0) x = -x;
-	int y = vector.Y / IntSpace; if (y < 0) y = -y;
+	int x = (FMath::Abs(vector.X) + 50) / IntSpace; if (x < 0) x = -x;
+	int y = (FMath::Abs(vector.Y) + 50) / IntSpace; if (y < 0) y = -y;
 
 	float result;
 	if (x > y)

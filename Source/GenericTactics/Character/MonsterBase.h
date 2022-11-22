@@ -10,7 +10,7 @@
 #include "MonsterBase.generated.h"
 
 /**
- * 
+ * Monsters should derive from MonsterBaseBP, not this.
  */
 UCLASS(Abstract)
 class GENERICTACTICS_API AMonsterBase : public AGTCharacter
@@ -24,6 +24,9 @@ protected:
 	/** for monsters that should have color variation (eg skin color) */
 	UFUNCTION(BlueprintImplementableEvent)
 	void AlterColors();
+
+	UFUNCTION(BlueprintCallable)
+	void SetImage(class UTexture2D* newImage);
 
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sprite")

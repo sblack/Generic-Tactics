@@ -225,12 +225,12 @@ void AHumanBase::AdvanceAI()
 			if (CharacterData->AIObjectives[i]->Attempt(this))
 			{
 				bEndTurn = false;
-				UE_LOG(LogTemp, Log, TEXT("%s successful"), *CharacterData->AIObjectives[i]->GetDebugString());
+				UE_LOG(LogTemp, Log, TEXT("%s successful"), *CharacterData->AIObjectives[i]->DebugString);
 				break;
 			}
 			else
 			{
-				UE_LOG(LogTemp, Log, TEXT("%s failed"), *CharacterData->AIObjectives[i]->GetDebugString());
+				UE_LOG(LogTemp, Log, TEXT("%s failed"), *CharacterData->AIObjectives[i]->DebugString);
 			}
 		}
 

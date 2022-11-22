@@ -272,7 +272,7 @@ void AGTPlayerController::OnLeftClickUpCombat()
 				GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Cyan, FString::Printf(TEXT("VALID TARGET")));
 				FActionData data;
 				data.Action = SelectedAction;
-				data.Actor = ActiveCharacter;
+				data.Source = ActiveCharacter;
 				data.Location = SelectedLocation;
 				ActiveCharacter->PerformAction(data);
 				PCState = EPCState::Active;

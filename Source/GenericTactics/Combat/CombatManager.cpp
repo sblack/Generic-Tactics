@@ -29,7 +29,7 @@ void UCombatManager::AdvanceActionQueue()
 		FActionData action = ActionQueue[0];
 		ActionQueue.RemoveAt(0);
 
-		if (action.Actor) //&& action.Actor is not dead
+		if (action.Source) //&& action.Actor is not dead
 		{
 			//action.Action->Perform(action.Actor, action.Location);
 			return;
@@ -43,6 +43,12 @@ void UCombatManager::AdvanceActionQueue()
 class UWorld* UCombatManager::GetWorld() const
 {
 	return (!HasAnyFlags(RF_ClassDefaultObject) && !GetOuter()->HasAnyFlags(RF_BeginDestroyed) && !GetOuter()->IsUnreachable() ? CastChecked<UGameInstance>(GetOuter())->GetWorld() : BackupWorld);
+}
+
+TArray<class AGTCharacter*> UCombatManager::GetTeam(bool bGetParty)
+{
+	if(bGetParty) return Instance->PartyCharacters;
+	else return Instance->EnemyCharacters;
 }
 
 UCombatManager::UCombatManager()
@@ -157,7 +163,7 @@ void UCombatManager::InitiateActionTarget(class UAction* action, class AGTCharac
 
 	Instance->ActionQueue.Empty();
 	FActionData act;
-	act.Actor = attacker;
+	act.Source = attacker;
 	act.Action = action;
 	act.Location = target->GetLocation() - attacker->GetActorLocation();
 	Instance->ActionQueue.Emplace(act);
@@ -203,7 +209,7 @@ void UCombatManager::InitiateActionLocation(class UAction* action, class AGTChar
 
 	Instance->ActionQueue.Empty();
 	FActionData act;
-	act.Actor = attacker;
+	act.Source = attacker;
 	act.Action = action;
 	act.Location = location - attacker->GetActorLocation();
 	Instance->ActionQueue.Emplace(act);

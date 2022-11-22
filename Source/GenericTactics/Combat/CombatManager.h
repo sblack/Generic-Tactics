@@ -21,7 +21,7 @@ public:
 		class UAction* Action;
 
 	UPROPERTY(BlueprintReadWrite)
-		class AGTCharacter* Actor;
+		TScriptInterface<IActionSourceInterface> Source;
 
 	UPROPERTY(BlueprintReadWrite)
 		FVector Location;
@@ -73,20 +73,24 @@ protected:
 public:
 	virtual class UWorld* GetWorld() const override;
 
+	UFUNCTION(BlueprintPure, Category = "Combat")
+		static UCombatManager* CombatManager() { return Instance; }
+
 	UPROPERTY(BlueprintReadOnly)
 		TArray<class AGTCharacter*> PartyCharacters;
 
 	UPROPERTY(BlueprintReadOnly)
 		TArray<class AGTCharacter*> EnemyCharacters;
 
+	/** param bGetParty get PartyCharacters if true, EnemyCharacters if false */
+	UFUNCTION(BlueprintPure)
+		static TArray<class AGTCharacter*> GetTeam(bool bGetParty);
+
 	class UActionDirect* PreppedAction;
 	FVector PreppedTarget;
 	TArray<FVector> AreaOfEffect;
 
 	UCombatManager();
-
-	UFUNCTION(BlueprintPure, Category = "Combat")
-		static UCombatManager* CombatManager() { return Instance; }
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 		static void StartCombat();

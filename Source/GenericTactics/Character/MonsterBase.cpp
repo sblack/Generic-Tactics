@@ -7,11 +7,16 @@
 
 void AMonsterBase::InitMaterials()
 {
-	AlterColors();
 	BodyDMI = GetSprite()->CreateDynamicMaterialInstance(0);
+	AlterColors();
 	BodyDMI->SetVectorParameterValue(TEXT("Color0"), Color0);
 	BodyDMI->SetVectorParameterValue(TEXT("Color1"), Color1);
 	BodyDMI->SetVectorParameterValue(TEXT("Color2"), Color2);
+}
+
+void AMonsterBase::SetImage(class UTexture2D* newImage)
+{
+	Image = newImage;
 }
 
 void AMonsterBase::SetStats()
@@ -67,6 +72,7 @@ void AMonsterBase::SetStats()
 
 void AMonsterBase::AdvanceAI()
 {
+	UE_LOG(LogTemp, Log, TEXT("Remaining: Act: %d Move: %f"), RemainingActions, RemainingMove);
 	if (!IsPartyCharacter()) //TODO: allow for AI control on Party Characters?
 	{
 		bool bEndTurn = true; //if AI can't perform any objectives, end turn
@@ -75,12 +81,12 @@ void AMonsterBase::AdvanceAI()
 			if (AIObjectives[i]->Attempt(this))
 			{
 				bEndTurn = false;
-				UE_LOG(LogTemp, Log, TEXT("%s successful"), *AIObjectives[i]->GetDebugString());
+				UE_LOG(LogTemp, Log, TEXT("%s successful"), *AIObjectives[i]->DebugString);
 				break;
 			}
 			else
 			{
-				UE_LOG(LogTemp, Log, TEXT("%s failed"), *AIObjectives[i]->GetDebugString());
+				UE_LOG(LogTemp, Log, TEXT("%s failed"), *AIObjectives[i]->DebugString);
 			}
 		}
 

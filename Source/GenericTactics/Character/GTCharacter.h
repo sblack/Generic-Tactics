@@ -98,6 +98,11 @@ private:
 	float MoveTimePassed = 0;
 	TArray<FMovementStep> MoveSteps;
 
+	FVector LungeDestination;
+	FVector PreLungePosition;
+	/** if <0, not in lunge */
+	float LungeTime = -1;
+
 	void FinishedMoving();
 	/** called on entering each step/tile of movement */
 	void OnMoveStep();
@@ -130,6 +135,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 		float GetMoveSpeed();
+
+	UFUNCTION(BlueprintCallable)
+		void StartLunge();
 
 
 
