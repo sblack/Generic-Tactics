@@ -37,7 +37,7 @@ void AGTCharacter::BeginPlay()
 	Stats = NewObject<UStatsBlock>(this, TEXT("Stats"));
 	SetStats();
 
-	Initiative = RollInitiative();
+	Initiative = RollInitiative() + Stats->InitiativeBonus + Stats->Stats[ECharStat::Dex];
 	MoveDataID = -1;
 	bIsMyTurn = false;
 
@@ -445,6 +445,11 @@ void AGTCharacter::StartAction()
 	}
 }
 
+void AGTCharacter::DelayCheckDeathQueue()
+{
+	UCombatManager::CheckDeathQueue();
+}
+
 EActionAnim AGTCharacter::GetActionAnim()
 {
 	if (!ActionInProgress.Action) return EActionAnim::Attack;
@@ -510,13 +515,10 @@ void AGTCharacter::CompleteAction()
 	else
 		ANavGrid::Instance->GenerateMoveData(this);
 
-	if (RemainingActions == 0 && RemainingMove < 1)
-	{
-		FTimerHandle TimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
-	}
-	else
-		AdvanceAI();
+	//UCombatManager::CheckDeathQueue();
+
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::DelayCheckDeathQueue, 1.5f, false); //damage anims should be only 1 second, so after that
 }
 
 void AGTCharacter::QueueAction(FNavPath path, FActionData actionData)

@@ -349,3 +349,57 @@ void UCombatManager::EndCurrentTurn()
 {
 	Instance->InitiativeQueue[Instance->InitiativeIndex]->EndTurn();
 }
+
+void UCombatManager::RemoveCharacter(class AGTCharacter* character)
+{
+	UE_LOG(LogTemp, Log, TEXT("Removing %s from combat"), *character->GetDisplayName().ToString());
+	if (Instance->InitiativeQueue[Instance->InitiativeIndex] == character)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("   Character removed on its own turn; may need handling"));
+		character->EndTurn();
+	}
+	int index = Instance->InitiativeQueue.Find(character);
+	if (index < Instance->InitiativeIndex)
+		Instance->InitiativeIndex -= 1;
+	Instance->InitiativeQueue.RemoveAt(index);
+	UGTHUDCode::Instance->GetInitiativeTrack()->RemoveMarker(character);
+	if(character->IsPartyCharacter())
+		Instance->PartyCharacters.Remove(character);
+	else
+		Instance->EnemyCharacters.Remove(character);
+
+}
+
+void UCombatManager::AddToDeathQueue(class AGTCharacter* character)
+{
+	if (!Instance->DeathQueue.Contains(character))
+	{
+		Instance->DeathQueue.Add(character);
+		UE_LOG(LogTemp, Log, TEXT("%s added to death queue"), *character->GetDisplayName().ToString());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s is already in death queue"), *character->GetDisplayName().ToString());
+	}
+}
+
+void UCombatManager::CheckDeathQueue()
+{
+	if (Instance->DeathQueue.Num() > 0)
+	{
+		ACameraPawn::Instance->AttachCamera(Instance->DeathQueue[0]);
+		Instance->DeathQueue[0]->OnDeath();
+		Instance->DeathQueue.RemoveAt(0);
+	}
+	else
+	{
+		AGTCharacter* character = Cast<AGTCharacter>(Instance->InitiativeQueue[Instance->InitiativeIndex]->AsActor());
+		if(character)
+		{
+			ACameraPawn::Instance->AttachCamera(character);
+			character->AdvanceAI();
+		}
+		else
+			Instance->InitiativeQueue[Instance->InitiativeIndex]->EndTurn(); //non-character sources only do one thing, and it's been done if we're here, so end turn
+	}
+}

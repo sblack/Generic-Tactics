@@ -84,7 +84,7 @@ public:
 
 
 
-protected:
+public:
 	virtual void AdvanceAI() override;
 
 

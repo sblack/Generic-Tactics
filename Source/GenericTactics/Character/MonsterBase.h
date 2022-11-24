@@ -68,6 +68,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Stats")
 		int32 DetectionRadius = 2;
 
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Stats")
+		int32 InitiativeBonus;
+
 	virtual void SetStats() override;
 
 
@@ -76,5 +79,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "AI")
 		TArray<class UAIObjective*> AIObjectives;
 
+public:
 	virtual void AdvanceAI() override;
 };

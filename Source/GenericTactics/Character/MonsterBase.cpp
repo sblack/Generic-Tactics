@@ -2,8 +2,9 @@
 
 
 #include "MonsterBase.h"
-#include "TimerManager.h"
 #include "StatsBlock.h"
+#include "../Player/GTPlayerController.h"
+#include "TimerManager.h"
 
 void AMonsterBase::InitMaterials()
 {
@@ -68,12 +69,26 @@ void AMonsterBase::SetStats()
 	Stats->MaxActions = MaxActions;
 	Stats->MoveSpeed = MoveSpeed;
 	Stats->DetectionRadius = DetectionRadius;
+	Stats->InitiativeBonus = InitiativeBonus;
 }
 
 void AMonsterBase::AdvanceAI()
 {
 	UE_LOG(LogTemp, Log, TEXT("Remaining: Act: %d Move: %f"), RemainingActions, RemainingMove);
-	if (!IsPartyCharacter()) //TODO: allow for AI control on Party Characters?
+	if (RemainingActions == 0 && RemainingMove < 1)
+	{
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
+		return;
+	}
+
+	//TODO: allow for AI control on Party Characters?
+	if (IsPartyCharacter())
+	{
+		AGTPlayerController::Instance->AwaitInput();
+		return;
+	}
+	else
 	{
 		bool bEndTurn = true; //if AI can't perform any objectives, end turn
 		for (int i = 0; i < AIObjectives.Num(); i++)

@@ -77,6 +77,9 @@ protected:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
 		void PlayHitAnim(bool bMajor);
 
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Combat")
+		void PlayDisappear();
+
 	virtual FTransform GetTipTransform();
 
 public:
@@ -145,9 +148,9 @@ public:
 private:
 
 	void StartAction();
-	
-protected:
-	virtual void AdvanceAI() {}
+
+	//don't know if it's possible to call a static function through timer, so...
+	void DelayCheckDeathQueue();
 
 public:
 	UPROPERTY(BlueprintReadOnly)
@@ -156,6 +159,8 @@ public:
 	/** If action uses a projectile, action should complete based on projectile, not animation */
 	UPROPERTY(BlueprintReadOnly)
 		bool bWaitingOnProjectile = false;
+
+	virtual void AdvanceAI() {}
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
 		EActionAnim GetActionAnim();
@@ -274,4 +279,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 		virtual TArray<class UActionAttack*> GetAllAttacks();
+
+	/** disappear + any effects like "death throes" */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Combat")
+		void OnDeath();
 };

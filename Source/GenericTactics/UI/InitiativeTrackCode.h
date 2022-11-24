@@ -21,5 +21,6 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		void AdvanceInitiative();
 
-	//TODO: RemoveMarker
+	UFUNCTION(BlueprintImplementableEvent)
+		void RemoveMarker(const TScriptInterface<IActionSourceInterface>& actSrc);
 };

@@ -50,6 +50,10 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	int32 SpellLevel;
 
+	// not including dex modifier
+	UPROPERTY(BlueprintReadOnly)
+	int32 InitiativeBonus = 0;
+
 	UStatsBlock(const FObjectInitializer& ObjectInitializer);
 
 	UFUNCTION(BlueprintCallable)

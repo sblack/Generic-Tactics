@@ -115,4 +115,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Player")
 		void CancelTarget();
+
+	void AwaitInput() {PCState = EPCState::Idle;}
 };

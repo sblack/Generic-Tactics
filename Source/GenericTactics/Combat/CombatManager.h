@@ -82,6 +82,10 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		TArray<class AGTCharacter*> EnemyCharacters;
 
+	/** Characters pending death animation / OnDeath effects */
+	UPROPERTY(BlueprintReadOnly)
+		TArray<class AGTCharacter*> DeathQueue;
+
 	/** param bGetParty get PartyCharacters if true, EnemyCharacters if false */
 	UFUNCTION(BlueprintPure)
 		static TArray<class AGTCharacter*> GetTeam(bool bGetParty);
@@ -141,4 +145,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 		static void EndCurrentTurn();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	static void RemoveCharacter(class AGTCharacter* character);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	static void AddToDeathQueue(class AGTCharacter* character);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	static void CheckDeathQueue();
 };

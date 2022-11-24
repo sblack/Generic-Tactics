@@ -2,6 +2,7 @@
 
 
 #include "HumanBase.h"
+#include "../Player/GTPlayerController.h"
 #include "TimerManager.h"
 
 
@@ -217,7 +218,21 @@ void AHumanBase::UpdateWeaponAndShield()
 
 void AHumanBase::AdvanceAI()
 {
-	if (CharacterData && !IsPartyCharacter()) //TODO: allow for AI control on Party Characters?
+	if (RemainingActions == 0 && RemainingMove < 1)
+	{
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
+		return;
+	}
+
+	//TODO: allow for AI control on Party Characters?
+	if (IsPartyCharacter())
+	{
+		AGTPlayerController::Instance->AwaitInput();
+		return;
+	}
+
+	if (CharacterData) 
 	{
 		bool bEndTurn = true; //if AI can't perform any objectives, end turn
 		for (int i = 0; i < CharacterData->AIObjectives.Num(); i++)
@@ -241,6 +256,12 @@ void AHumanBase::AdvanceAI()
 			FTimerHandle TimerHandle;
 			GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s has no character data and no AI. Ending turn."), *GetDisplayName().ToString());
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AGTCharacter::EndTurn, 1, false);
 	}
 }
 
