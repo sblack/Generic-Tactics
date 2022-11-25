@@ -5,6 +5,7 @@
 #include "CharacterButtonCode.h"
 #include "../Combat/CombatManager.h"
 #include "../Movement/NavGrid.h"
+#include "../Player/CameraPawn.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 
@@ -191,9 +192,14 @@ void UPreCombatUICode::HoverCharacter_Implementation(class AGTCharacter* charact
 
 void UPreCombatUICode::HoverLocation_Implementation(FVector location)
 {
+	if (StartFacing.Roll == 90) //ToOrientationRotator sets Roll to 0, so we know when it has or hasn't been done
+	{
+		StartFacing = (ACameraPawn::Instance->GetActorForwardVector() * FVector(1, 1, 0)).ToOrientationRotator();
+	}
 	if (SelectedButton)
 	{
 		FakeCharActor->SetActorLocation(location);
+		FakeCharActor->SetActorRotation(StartFacing);
 		FakeCharActor->SetActorHiddenInGame(false);
 		ValidText->SetText(FText::FromString(TEXT("Valid")));
 	}

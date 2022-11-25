@@ -51,6 +51,10 @@ protected:
 
 	TArray<struct FGridData*> StartArea;
 
+	/** Direction that party characters should face on spawning */
+	UPROPERTY(BlueprintReadOnly)
+	FRotator StartFacing = FRotator(0, 0, 90);
+
 	virtual void NativeConstruct() override;
 
 	virtual void NativeDestruct() override;
