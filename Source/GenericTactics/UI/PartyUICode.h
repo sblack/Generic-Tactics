@@ -39,11 +39,7 @@ public:
 		void ClearCharacterName();
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "UI|Party")
-		void ShowFeatConfirm(const class UFeat* feat);
-
-	/** bUpdateFeatPage - if true, update the feat lists */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "UI|Party")
-		void HideFeatConfirm(bool bUpdateFeatPage);
+		void OnFeatConfirm();
 };
 
 /**

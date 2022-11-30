@@ -50,6 +50,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Highlight Color")
 		TArray<FLinearColor> ReachColors;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (RowType = "MapData"))
+		class UDataTable* MapDataTable;
+
 	UFUNCTION(BlueprintPure)
 		static UGTGameInstance* GetGTGameInstance() { return Instance; }
 

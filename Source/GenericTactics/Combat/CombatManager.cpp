@@ -364,9 +364,23 @@ void UCombatManager::RemoveCharacter(class AGTCharacter* character)
 	Instance->InitiativeQueue.RemoveAt(index);
 	UGTHUDCode::Instance->GetInitiativeTrack()->RemoveMarker(character);
 	if(character->IsPartyCharacter())
+	{
 		Instance->PartyCharacters.Remove(character);
+		//TODO
+		//if (Instance->PartyCharacters.Num() == 0)
+		//{
+		//	//End Battle
+		//}
+	}
 	else
+	{
 		Instance->EnemyCharacters.Remove(character);
+		//TODO
+		//if (Instance->EnemyCharacters.Num() == 0)
+		//{
+		//	//End Battle
+		//}
+	}
 
 }
 
