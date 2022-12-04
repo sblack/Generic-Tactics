@@ -62,8 +62,8 @@ void UGTBFL::RGBToHSL(FLinearColor InColor, float& H, float& S, float& L, float&
 	if (c < .001)
 	{
 		H = 0;
-		L = (max + min) / 2;
 		S = 0;
+		L = (max + min) / 2;
 		A = InColor.A;
 		return;
 	}
@@ -86,7 +86,7 @@ FLinearColor UGTBFL::RGBToHSL(FLinearColor InRGB)
 
 	if (c < .001)
 	{
-		return FLinearColor(0, (max + min) / 2, 0, InRGB.A);
+		return FLinearColor(0, 0, (max + min) / 2, InRGB.A);
 	}
 
 	if (max == InRGB.R) H = FMath::Fmod((InRGB.G - InRGB.B) / c + 6, 6) * 60;
