@@ -58,6 +58,8 @@ protected:
 	//bool bInterrupting = false;
 
 	bool bPreCombat = true;
+	//if true, check if party is defeated
+	bool bCheckDefeat = false;
 
 	//FTimerHandle InterruptHandle;
 

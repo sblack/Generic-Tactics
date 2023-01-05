@@ -26,5 +26,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		class UTexture2D* Image;
 
+	/** effective level for XP calc. Should equal level of enemies if equal sides; increase if enemy outnumbers party */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		uint8 Level;
+
 	FMapData(){}
 };

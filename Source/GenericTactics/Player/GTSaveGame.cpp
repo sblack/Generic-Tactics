@@ -80,6 +80,21 @@ void UGTSaveGame::SaveCharacter(class UCharacterDataAsset* character)
 	}
 }
 
+//Incomplete
+// issue: newly created characters would be missed if they haven't been saved yet
+//void UGTSaveGame::SaveCharacters()
+//{
+//	for (int i = 0; i < Characters.Num(); i++)
+//	{
+//		UCharacterDataAsset* asset = *AssetCache.Find(Characters[i].ID);
+//		
+//		if (!asset)
+//		{
+//			UE_LOG(LogTemp, Warning, TEXT("%s (ID %d) has no cached asset?"), *Characters[i].Name.ToString(), Characters[i].ID);
+//		}
+//	}
+//}
+
 void UGTSaveGame::DeleteCharacter(class UCharacterDataAsset* character)
 {
 	if (!character || character->ID == -1 || Characters.Num() == 0)
@@ -104,4 +119,34 @@ void UGTSaveGame::DeleteCharacter(class UCharacterDataAsset* character)
 	}
 	UE_LOG(LogTemp, Warning, TEXT("%s not found for deletion"), *character->Name.ToString());
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("%s not found for deletion"), *character->Name.ToString()));
+}
+
+class UCharacterDataAsset* UGTSaveGame::GetCharacterByID(int32 ID)
+{
+	if (AssetCache.Contains(ID))
+		return *AssetCache.Find(ID);
+
+	for (int i = 0; i < Characters.Num(); i++)
+	{
+		if (Characters[i].ID == ID)
+		{
+			UCharacterDataAsset* asset = UCharacterDataAsset::FromSave(Characters[i]);
+			AssetCache.Add(ID, asset);
+			return asset;
+		}
+	}
+	UE_LOG(LogTemp, Error, TEXT("No character found with ID %d"), ID);
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("No character found with ID %d"), ID));
+	return nullptr;
+}
+
+TArray<class UCharacterDataAsset*> UGTSaveGame::CharacterAssets()
+{
+	//if AssetCache is missing anyone, add them; otherwise, does nothing
+	for (int i = 0; i < Characters.Num(); i++)
+		GetCharacterByID(Characters[i].ID);
+
+	TArray<class UCharacterDataAsset*> result;
+	AssetCache.GenerateValueArray(result);
+	return result;
 }

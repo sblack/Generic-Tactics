@@ -32,6 +32,22 @@ FLinearColor UGTGameInstance::GetReachColor(uint8 index)
 	return ReachColors[index];
 }
 
+void UGTGameInstance::GiveXP(class UCharacterDataAsset* character)
+{
+	if (character->bDead)
+	{
+		return;
+	}
+
+	int lvlDiff = character->GetLevel() - Instance->MapLevel;
+	int addXP = (int)(10 * FMath::Pow(.5f, lvlDiff / 2.0f));
+	if (addXP < 1) addXP = 1;
+	else if (addXP > Instance->XPPerLevel) addXP = Instance->XPPerLevel;
+
+	character->TotalXP += addXP;
+	character->RemainingXP += addXP;
+}
+
 void UGTGameInstance::LoadData()
 {
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");

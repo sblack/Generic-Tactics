@@ -159,6 +159,10 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stats")
 		TArray<uint8> StatChoices;
 
+	/** party member has died */
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Combat")
+		bool bDead;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "AI")
 		TArray<class UAIObjective*> AIObjectives;
 	

@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "../Character/GTAIController.h"
 #include "../Character/GTCharacter.h"
+#include "../Character/HumanBase.h"
 #include "../Character/StatsBlock.h"
 #include "../Movement/NavGrid.h"
 #include "../Player/CameraPawn.h"
@@ -74,6 +75,7 @@ void UCombatManager::StartCombat()
 	Instance->InitiativeQueue.Empty(temp.Num());
 	Instance->EnemyCharacters.Empty();
 	Instance->PartyCharacters.Empty();
+	UGTGameInstance::Instance->RecentParty.Empty();
 	for (int i = 0; i < temp.Num(); i++)
 	{
 		bool bInserted = false;
@@ -94,6 +96,8 @@ void UCombatManager::StartCombat()
 		{
 			Instance->PartyCharacters.Add(gtc);
 			UE_LOG(LogTemp, Log, TEXT("%s added to PartyCharacters"), *gtc->GetName());
+			UGTGameInstance::Instance->RecentParty.Add(Cast<AHumanBase>(gtc)->CharacterData);
+			UGTGameInstance::Instance->RecentPartyIDs.Add(Cast<AHumanBase>(gtc)->CharacterData->ID, true);
 		}
 		else
 		{
@@ -366,20 +370,15 @@ void UCombatManager::RemoveCharacter(class AGTCharacter* character)
 	if(character->IsPartyCharacter())
 	{
 		Instance->PartyCharacters.Remove(character);
-		//TODO
-		//if (Instance->PartyCharacters.Num() == 0)
-		//{
-		//	//End Battle
-		//}
+		character->OnDeath();
 	}
 	else
 	{
 		Instance->EnemyCharacters.Remove(character);
-		//TODO
-		//if (Instance->EnemyCharacters.Num() == 0)
-		//{
-		//	//End Battle
-		//}
+		if (Instance->EnemyCharacters.Num() == 0)
+		{
+			UGTHUDCode::Instance->EndCombat(true);
+		}
 	}
 
 }
@@ -402,11 +401,37 @@ void UCombatManager::CheckDeathQueue()
 	if (Instance->DeathQueue.Num() > 0)
 	{
 		ACameraPawn::Instance->AttachCamera(Instance->DeathQueue[0]);
-		Instance->DeathQueue[0]->OnDeath();
+		if (Instance->DeathQueue[0]->IsPartyCharacter())
+		{
+			Instance->bCheckDefeat = true;
+			//TODO: Character::OnDying()
+		}
+		else
+			Instance->DeathQueue[0]->OnDeath();
 		Instance->DeathQueue.RemoveAt(0);
 	}
 	else
 	{
+		if (Instance->bCheckDefeat)
+		{
+			bool bAllDown = true;
+			for (AGTCharacter* chara : Instance->PartyCharacters)
+			{
+				if (!chara->GetIsDead())
+				{
+					bAllDown = false;
+					break;
+				}
+			}
+
+			if (bAllDown)
+			{
+				UGTHUDCode::Instance->EndCombat(false);
+				return;
+			}
+		}
+		Instance->bCheckDefeat = false;
+
 		AGTCharacter* character = Cast<AGTCharacter>(Instance->InitiativeQueue[Instance->InitiativeIndex]->AsActor());
 		if(character)
 		{

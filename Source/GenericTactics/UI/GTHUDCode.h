@@ -95,4 +95,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 		void LogCombatMessage(FText text);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "UI|HUD")
+		void EndCombat(bool bVictory);
+
 };

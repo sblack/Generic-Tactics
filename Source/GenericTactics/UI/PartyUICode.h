@@ -40,6 +40,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "UI|Party")
 		void OnFeatConfirm();
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+		void SaveCharacters();
 };
 
 /**

@@ -53,6 +53,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (RowType = "MapData"))
 		class UDataTable* MapDataTable;
 
+	/** XP Level of recently fought map (for XP rewards) */
+	UPROPERTY(Transient, BlueprintReadWrite, Category = "Combat")
+		int32 MapLevel;
+
+	/** Party used in recently fought map */
+	UPROPERTY(Transient, BlueprintReadWrite, Category = "Combat")
+		TArray<class UCharacterDataAsset*> RecentParty;
+
+	/** Key is ID, value is alive (true) or dead (false) */
+	UPROPERTY(Transient, BlueprintReadWrite)
+		TMap<int32, bool> RecentPartyIDs;
+
 	UFUNCTION(BlueprintPure)
 		static UGTGameInstance* GetGTGameInstance() { return Instance; }
 
@@ -61,4 +73,7 @@ public:
 	virtual void Shutdown() override;
 
 	FLinearColor GetReachColor(uint8 index);
+
+	UFUNCTION(BlueprintCallable)
+		static void GiveXP(class UCharacterDataAsset* character);
 };
