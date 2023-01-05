@@ -126,7 +126,7 @@ void ACameraPawn::MoveForward(float value)
 
 void ACameraPawn::ZoomIn(float value)
 {
-	if (value == 0)
+	if (!Instance || value == 0)
 		return;
 
 	ZoomLength -= 64.0f * value;
@@ -163,5 +163,16 @@ void ACameraPawn::AttachCamera(AActor* actor)
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		bAttached = false;
 	}
+}
+
+bool ACameraPawn::IsOnScreen(FVector worldPos, float edge /*= .1f*/)
+{
+	FVector2D screenPos;
+	UGameplayStatics::ProjectWorldToScreen(UGameplayStatics::GetPlayerController(this, 0), worldPos, screenPos);
+	int32 width, height;
+	UGameplayStatics::GetPlayerController(this, 0)->GetViewportSize(width, height);
+	screenPos /= FVector2D(width, height);
+
+	return screenPos.X > edge && screenPos.X < (1 - edge) && screenPos.Y > edge && screenPos.Y < (1 - edge);
 }
 

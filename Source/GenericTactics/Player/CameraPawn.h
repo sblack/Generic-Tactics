@@ -83,6 +83,9 @@ public:
 
 	void AttachCamera(AActor* actor);
 
+	/** is worldPos on screen and more than edge away from the sides? */
+	bool IsOnScreen(FVector worldPos, float edge = .1f);
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "Camera")
 		void RevealMap();
 };

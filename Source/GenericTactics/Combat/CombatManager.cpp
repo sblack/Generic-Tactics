@@ -400,7 +400,8 @@ void UCombatManager::CheckDeathQueue()
 {
 	if (Instance->DeathQueue.Num() > 0)
 	{
-		ACameraPawn::Instance->AttachCamera(Instance->DeathQueue[0]);
+		if (!ACameraPawn::Instance->IsOnScreen(Instance->DeathQueue[0]->GetActorLocation()))
+			ACameraPawn::Instance->AttachCamera(Instance->DeathQueue[0]);
 		if (Instance->DeathQueue[0]->IsPartyCharacter())
 		{
 			Instance->bCheckDefeat = true;
