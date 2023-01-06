@@ -102,6 +102,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player")
 		void ControlCharacter(class AGTCharacter* chara);
 
+	UFUNCTION(BlueprintPure)
+		class AGTCharacter* GetActiveCharacter() { return ActiveCharacter;}
+
 	void MoveCompleted();
 
 	UFUNCTION(BlueprintPure, Category = "Debug")

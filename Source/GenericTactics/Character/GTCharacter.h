@@ -278,7 +278,7 @@ public:
 	bool IsSameTeam(ITargetable target);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
-		virtual TArray<class UActionAttack*> GetAllAttacks();
+		virtual TArray<class UAction*> GetAllAttacks();
 
 	/** disappear + any effects like "death throes" */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Combat")

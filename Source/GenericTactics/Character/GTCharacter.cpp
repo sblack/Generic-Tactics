@@ -761,9 +761,9 @@ bool AGTCharacter::IsSameTeam(ITargetable target)
 	return targetCharacter->Team == Team;
 }
 
-TArray<class UActionAttack*> AGTCharacter::GetAllAttacks()
+TArray<class UAction*> AGTCharacter::GetAllAttacks()
 {
-	TArray<UActionAttack*> attacks;
+	TArray<UAction*> attacks;
 
 	if (DefaultMeleeAttack)
 		attacks.Add(DefaultMeleeAttack);

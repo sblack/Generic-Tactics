@@ -98,5 +98,5 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, meta = (ExposeOnSpawn))
 		class UCharacterDataAsset* CharacterData;
 
-	virtual TArray<class UActionAttack*> GetAllAttacks() override;
+	virtual TArray<class UAction*> GetAllAttacks() override;
 };

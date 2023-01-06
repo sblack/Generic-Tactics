@@ -270,9 +270,9 @@ void AHumanBase::SetStats()
 	Stats->FillFromData(CharacterData);
 }
 
-TArray<class UActionAttack*> AHumanBase::GetAllAttacks()
+TArray<class UAction*> AHumanBase::GetAllAttacks()
 {
-	TArray<UActionAttack*> attacks;
+	TArray<UAction*> attacks;
 
 	if (CharacterData->Weapon.BaseItem)
 	{

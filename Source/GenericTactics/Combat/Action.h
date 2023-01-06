@@ -30,6 +30,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		FText Name;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		class UTexture2D* Icon;
+
 	/** True range is +.5, for "rounding" */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Targeting")
 		float Range;
