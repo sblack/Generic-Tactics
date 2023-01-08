@@ -20,9 +20,6 @@ private:
 	/** is last button of submenu the next button */
 	bool bNextButton = false;
 
-	/** text of label when not hovering over a button */
-	FText LabelTextUnhovered;
-
 	void DeselectMain();
 
 	void UpdateSubMenu();
@@ -73,11 +70,15 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 		class UTexture2D* NextIcon;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 		class UButton* SelectedMain = nullptr;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 		class UButton* SelectedSub = nullptr;
+
+	/** text of label when not hovering over a button */
+	UPROPERTY(BlueprintReadWrite)
+	FText LabelTextUnhovered;
 
 	UFUNCTION(BlueprintCallable)
 		void ButtonUnhovered();
@@ -95,4 +96,13 @@ protected:
 	void SubClicked(int32 index);
 
 	void SubHovered(int32 index);
+
+	/** Fucks sake */
+	UFUNCTION(BlueprintImplementableEvent)
+	void DeselectMainBP();
+public:
+	
+	UFUNCTION(BlueprintCallable)
+	void Reset();
+
 };

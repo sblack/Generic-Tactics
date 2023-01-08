@@ -505,15 +505,13 @@ void AGTCharacter::CompleteAction()
 		UE_LOG(LogTemp, Log, TEXT("Completing %s"), *ActionInProgress.Action->Name.ToString());
 
 	ActionInProgress.Action = nullptr;
+	ANavGrid::Instance->GenerateMoveData(this);
 
 	if (IsPartyCharacter())
 	{
-		ANavGrid::Instance->ShowMoveRange(this);
 		UGTHUDCode::Instance->ShowHideCommandMenu(this);
 		UGTHUDCode::Instance->RefreshCharacterVitals();
 	}
-	else
-		ANavGrid::Instance->GenerateMoveData(this);
 
 	//UCombatManager::CheckDeathQueue();
 
@@ -668,18 +666,17 @@ void AGTCharacter::BeginTurn_Implementation()
 	}
 
 	ANavGrid::MoveDataID++;
+	ANavGrid::Instance->GenerateMoveData(this);
 	ACameraPawn::Instance->SetActorLocation(GetActorLocation());
 	UGTHUDCode::Instance->ShowCharacterInfo(this);
 	UCombatManager::ResetDetection(this);
 
+
 	if(IsPartyCharacter())
 	{
 		AGTPlayerController::Instance->ControlCharacter(this);
-		ANavGrid::Instance->ShowMoveRange(this);
 		UGTHUDCode::Instance->ShowHideCommandMenu(this);
 	}
-	else
-		ANavGrid::Instance->GenerateMoveData(this);
 
 
 	AdvanceAI();

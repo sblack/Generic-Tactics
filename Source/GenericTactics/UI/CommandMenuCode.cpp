@@ -14,8 +14,16 @@ void UCommandMenuCode::DeselectMain()
 	Sub->SetVisibility(ESlateVisibility::Collapsed);
 	AGTPlayerController::Instance->CancelTarget();
 
-	SelectedMain->SetBackgroundColor(FLinearColor::White);
+	//SelectedMain->SetBackgroundColor(FLinearColor::White);
+	//SelectedMain->BackgroundColor = FLinearColor::White;
 	SelectedMain = nullptr;
+
+	//somehow, a nullptr isn't enough. What the fuck
+	if (SelectedSub != nullptr)
+	{
+		//SelectedSub->SetBackgroundColor(FLinearColor::White);
+		SelectedSub = nullptr;
+	}
 
 	LabelTextUnhovered = FText::GetEmpty();
 }
@@ -65,15 +73,29 @@ void UCommandMenuCode::UpdateSubMenu()
 
 void UCommandMenuCode::ButtonUnhovered()
 {
-	LabelText->SetText(LabelTextUnhovered);
+	if (!LabelText)
+	{
+		UE_LOG(LogTemp,Error,TEXT("LabelText is null, somehow"));
+	}
+	else
+		LabelText->SetText(LabelTextUnhovered);
+
+
 	if(LabelTextUnhovered.IsEmpty())
-		Label->SetVisibility(ESlateVisibility::Hidden);
+	{
+		if (!Label)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Label is null, somehow"));
+		}
+		else
+			Label->SetVisibility(ESlateVisibility::Hidden);
+	}
 }
 
 void UCommandMenuCode::MoveClicked()
 {
 	bool bWasMove = (SelectedMain == MoveButton);
-	DeselectMain();
+	DeselectMainBP();
 	if (!bWasMove)
 	{
 		SelectedMain = MoveButton;
@@ -87,7 +109,7 @@ void UCommandMenuCode::MoveClicked()
 void UCommandMenuCode::AttackClicked()
 {
 	bool bWasAttack = (SelectedMain == AttackButton);
-	DeselectMain();
+	DeselectMainBP();
 	if (!bWasAttack)
 	{
 		SelectedMain = AttackButton;
@@ -232,4 +254,10 @@ void UCommandMenuCode::SubHovered(int32 index)
 	{
 		LabelText->SetText(SubActions[index + SubMenuOffset]->Name);
 	}
+}
+
+void UCommandMenuCode::Reset()
+{
+	DeselectMainBP();
+	ButtonUnhovered();
 }
