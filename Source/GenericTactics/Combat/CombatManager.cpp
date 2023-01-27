@@ -10,6 +10,7 @@
 #include "../Character/HumanBase.h"
 #include "../Character/StatsBlock.h"
 #include "../Movement/NavGrid.h"
+#include "../Movement/HighlightManager.h"
 #include "../Player/CameraPawn.h"
 //#include "../Player/GTPlayerController.h"
 #include "../UI/GTHUDCode.h"
@@ -62,6 +63,8 @@ void UCombatManager::StartCombat()
 	UE_LOG(LogTemp, Log, TEXT("START COMBAT"));
 	Instance->bPreCombat = false;
 	ACameraPawn::Instance->RevealMap();
+
+	ANavGrid::Instance->HighlightManager->ClearAll();
 
 	TArray<AActor*> temp;
 	UGameplayStatics::GetAllActorsOfClass(GEngine->GameViewport->GetWorld(), AGTCharacter::StaticClass(), temp);
@@ -146,6 +149,7 @@ void UCombatManager::StartPreCombat()
 
 void UCombatManager::AdvanceInitiative()
 {
+	ANavGrid::Instance->HighlightManager->ClearAll();
 	Instance->InitiativeIndex += 1;
 	if (Instance->InitiativeIndex >= Instance->InitiativeQueue.Num())
 	{

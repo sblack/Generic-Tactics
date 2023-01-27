@@ -114,7 +114,8 @@ void AGTPlayerController::BeginTargetAction(class UAction* action)
 	PCState = EPCState::TargetAction;
 	SelectedLocation = FVector(0, 0, -1000);
 	SelectedAction = action;
-	ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, SelectedLocation, SelectedAction);
+	//ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, SelectedLocation, SelectedAction);
+	ANavGrid::Instance->ShowTargetableArea(ActiveCharacter, SelectedAction);
 }
 
 void AGTPlayerController::CancelTarget()
@@ -264,7 +265,7 @@ void AGTPlayerController::OnLeftClickUpCombat()
 	else if (PCState == EPCState::TargetAction)
 	{
 		UE_LOG(LogGTPlayerController, Log, TEXT("   TargetAction"));
-		if (HoverLocation == SelectedLocation)
+		if (HoverLocation == SelectedLocation) //confirm
 		{
 			//UCombatManager::InitiatePreparedAction(ActiveCharacter);
 			if (ANavGrid::Instance->GetWithinDistance(ActiveCharacter->GetActorLocation(), SelectedAction->Range).Contains(HoverLocation))
@@ -284,13 +285,13 @@ void AGTPlayerController::OnLeftClickUpCombat()
 				GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, FString::Printf(TEXT("INVALID TARGET")));
 			}
 		}
-		else
+		else //select area for confirmation
 		{
 			//TODO: check whether Action CAN target self
 			if(HoverLocation != ActiveCharacter->GetActorLocation())
 			{
 				SelectedLocation = HoverLocation;
-				ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, SelectedLocation, SelectedAction);
+				ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, SelectedLocation, SelectedAction, true);
 			}
 		}
 	}
@@ -394,7 +395,7 @@ void AGTPlayerController::MouseOverTerrain(FVector location)
 				else if (PCState == EPCState::TargetAction)
 				{
 					//UCombatManager::UpdateAreaOfEffect(ActiveCharacter->GetActorLocation(), HoverLocation);
-					ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, HoverLocation, SelectedAction);
+					ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, HoverLocation, SelectedAction, false);
 				}
 			}
 		}
@@ -428,7 +429,7 @@ void AGTPlayerController::MouseOverTarget(ITargetable target)
 		if (ActiveCharacter && PCState == EPCState::TargetAction && SelectedLocation.Z == -1000)
 		{
 			//UCombatManager::UpdateAreaOfEffect(ActiveCharacter->GetActorLocation(), HoverLocation);
-			ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, HoverLocation, SelectedAction);
+			ANavGrid::Instance->ShowTargetingArea(ActiveCharacter, HoverLocation, SelectedAction, false);
 		}
 	}
 

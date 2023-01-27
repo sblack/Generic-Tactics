@@ -133,13 +133,10 @@ protected:
 
 	static FVector StartVector;
 
-	TArray<FGridData> GridOLD;
 	//X dimension of Grid (as Grid is 2d array in 1d)
 	int32 Width;
 
 	FGridData Grid[32][32];
-
-	TArray<FVector> PathPoints;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ExposeOnSpawn = true, ClampMin = 100))
 		float Spacing = 100.f;
@@ -227,12 +224,12 @@ public:
 		TArray<FVector> GetWithinDistance(FVector center, float distance, float minDistance = 0);
 
 	UFUNCTION(BlueprintCallable, Category = "Tactics")
-		void ShowTiles(TArray<FVector> locations, FLinearColor color);
-
-	UFUNCTION(BlueprintCallable, Category = "Tactics")
 		void ShowTargeting(FVector source, float range);
 
-	void ShowTargetingArea(IActionSource source, FVector target, class UAction* action);
+	//bSelect: true for select, false for hover
+	void ShowTargetingArea(IActionSource source, FVector target, class UAction* action, bool bSelect);
+
+	void ShowTargetableArea(IActionSource source, class UAction* action);
 
 	TArray<FGridData*> GetStartArea();
 };

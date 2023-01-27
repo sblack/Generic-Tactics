@@ -153,7 +153,7 @@ void ANavGrid::ScanTile(int ix, int iy)
 		if (rt == ERegionTypes::Start
 			&& HighlightManager)
 		{
-			HighlightManager->SetTileColor(loc, UGTGameInstance::Instance->TargetColor);
+			HighlightManager->SetHovered(loc);
 		}
 	}
 
@@ -509,9 +509,12 @@ void ANavGrid::ShowMoveRange(class AGTCharacter* character)
 					return;
 				}
 
-				
+				if (XYToIndex(gridData->Location.X) == 0 && XYToIndex(gridData->Location.Y) == 0)
+				{
+					UE_LOG(LogNavGrid, Log, TEXT("ActCost at 0, 0: %d"), character->MoveGrid[i][j].ActionCost);
+				}
 
-				HighlightManager->SetTileColor(gridData->Location, UGTGameInstance::Instance->GetReachColor(character->MoveGrid[i][j].ActionCost));
+				HighlightManager->SetReach(gridData->Location, character->MoveGrid[i][j].ActionCost);
 			}
 		}
 	}
@@ -520,32 +523,20 @@ void ANavGrid::ShowMoveRange(class AGTCharacter* character)
 		//GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, TEXT("Clearing Highlights"));
 		UE_LOG(LogNavGrid, Log, TEXT("Clearing Highlights"));
 
-		HighlightManager->ClearTileColors();
-		PathPoints.Empty();
+		//HighlightManager->ClearTileColors();
+		HighlightManager->ClearAll();
 	}
 }
 
 void ANavGrid::ShowPath(TArray<FVector>& path)
 {
-	for (int i = 0; i < PathPoints.Num(); i++)
-	{
-		HighlightManager->SetTileColor(PathPoints[i], UGTGameInstance::Instance->GetReachColor(GetGridData(PathPoints[i]).ActCost));
-	}
-	PathPoints = path;
-
-	for (int i = 0; i < PathPoints.Num(); i++)
-	{
-		HighlightManager->SetTileColor(PathPoints[i], UGTGameInstance::Instance->PathColor);
-	}
+	HighlightManager->ClearHovered();
+	HighlightManager->SetHovered(path);
 }
 
 void ANavGrid::ClearPath()
 {
-	for (int i = 0; i < PathPoints.Num(); i++)
-	{
-		HighlightManager->SetTileColor(PathPoints[i], UGTGameInstance::Instance->GetReachColor(GetGridData(PathPoints[i]).ActCost));
-	}
-	PathPoints.Empty();
+	HighlightManager->ClearHovered();
 }
 
 FGridData ANavGrid::GetGridData(FVector location)
@@ -639,16 +630,19 @@ TArray<FVector> ANavGrid::GetWithinDistance(FVector center, float distance, floa
 		{
 			if (iy + y < 0 || iy + y > 31)
 				continue;
+			if (Grid[ix + x][iy + y].RegionType == ERegionTypes::Void)
+				continue;
+
 			int ay = (y < 0) ? -y : y;
 
 			if (ay > ax)
 			{
-				if (ay + ax / 2 <= distance && ay + ax / 2 >= minDistance)
+				if (ay + ax / 2.f <= distance && ay + ax / 2.f >= minDistance)
 					result.Add(Grid[ix + x][iy + y].Location);
 			}
 			else
 			{
-				if (ax + ay / 2 <= distance && ax + ay / 2 >= minDistance)
+				if (ax + ay / 2.f <= distance && ax + ay / 2.f >= minDistance)
 					result.Add(Grid[ix + x][iy + y].Location);
 			}
 		}
@@ -657,45 +651,32 @@ TArray<FVector> ANavGrid::GetWithinDistance(FVector center, float distance, floa
 	return result;
 }
 
-void ANavGrid::ShowTiles(TArray<FVector> locations, FLinearColor color)
-{
-	ShowMoveRange(nullptr);
-	for (int i = 0; i < locations.Num(); i++)
-	{
-		HighlightManager->SetTileColor(locations[i], color);
-	}
-}
-
 void ANavGrid::ShowTargeting(FVector source, float range)
 {
 	TArray<FVector> targetable = GetWithinDistance(source, range);
 
-	ShowMoveRange(nullptr);
-	for (int i = 0; i < targetable.Num(); i++)
+	HighlightManager->ClearHovered();
+	HighlightManager->SetHovered(targetable);
+}
+
+void ANavGrid::ShowTargetingArea(IActionSource source, FVector target, class UAction* action, bool bSelect)
+{
+	if (bSelect) HighlightManager->ClearSelected();
+	else HighlightManager->ClearHovered();
+
+	if (GetDistance(target - source->GetLocation()) < action->Range + .5f)
 	{
-		HighlightManager->SetTileColor(targetable[i], UGTGameInstance::Instance->TargetColor);
+		TArray<FVector> area = action->GetAffectedArea(source, target);
+		if (bSelect) HighlightManager->SetSelected(area);
+		else HighlightManager->SetHovered(area);
 	}
 }
 
-void ANavGrid::ShowTargetingArea(IActionSource source, FVector target, class UAction* action)
+void ANavGrid::ShowTargetableArea(IActionSource source, class UAction* action)
 {
-	ShowMoveRange(nullptr);
-
-	TArray<FVector> targetable = GetWithinDistance(source->GetLocation(), action->Range);
-	bool bValidTarget = false;
-	for (int i = 0; i < targetable.Num(); i++)
-	{
-		HighlightManager->SetTileColor(targetable[i], UGTGameInstance::Instance->ReachColors[1]);
-		if (targetable[i] == target)
-			bValidTarget = true;
-	}
-
-	if (bValidTarget)
-	{
-		TArray<FVector> area = action->GetAffectedArea(source, target);
-		for (int i = 0 ; i < area.Num(); i++)
-			HighlightManager->SetTileColor(area[i], UGTGameInstance::Instance->TargetColor);
-	}
+	HighlightManager->ClearReach();
+	TArray<FVector> targetable = GetWithinDistance(source->GetLocation(), action->Range + .5f);
+	HighlightManager->SetReach(targetable, 1);
 }
 
 TArray<FGridData*> ANavGrid::GetStartArea()

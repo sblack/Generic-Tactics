@@ -18,19 +18,29 @@ class GENERICTACTICS_API UHighlightManager : public UObject
 protected:
 	//The size of our textures
 	uint32 TextureSize = 1024;
+	uint32 MapSize = 32;
+	uint32 HalfWorld;
 
 	uint32 TileSize;
 
 	//color of each pixel
 	TArray<FColor> TextureData;
 
-	//color of each tile
-	TArray<FColor> TileData;
+	//priority low to high
+	//0F -> range/reach
+	//30 -> selection
+	//C0 -> hover
+	TArray<uint8> TileData;
 
 	//Texture regions	
 	FUpdateTextureRegion2D* textureRegions;
 
 	float borderVals[32];
+	
+	int HoverMaxX, HoverMaxY, HoverMinX, HoverMinY;
+	int SelectMaxX, SelectMaxY, SelectMinX, SelectMinY;
+
+	void UpdateTile(int x, int y);
 
 public:
 
@@ -45,11 +55,19 @@ public:
 
 	void UpdateTexture();
 
-	UFUNCTION(BlueprintCallable, Category = "Tactics|Tile")
-		void ClearTileColors();
+	void SetHovered(FVector location);
+	void SetHovered(TArray<FVector> locations);
+	void ClearHovered();
 
-	UFUNCTION(BlueprintCallable, Category = "Tactics|Tile")
-		void SetTileColor(FVector location, FLinearColor color);
+	void SetSelected(FVector location);
+	void SetSelected(TArray<FVector> locations);
+	void ClearSelected();
+
+	void SetReach(FVector location, int value);
+	void SetReach(TArray<FVector> locations, int value);
+	void ClearReach();
+
+	void ClearAll();
 
 	virtual void FinishDestroy() override;
 };
